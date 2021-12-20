@@ -24,12 +24,20 @@ PubSubClient * mqttClient;
 
 
 // PostBox:
-int buttons[2] = {12, 13};    // Pins on which buttons are attached
+struct  PostBoxSwitch{
+  String name;
+  int pin;
+  bool state = false;
+  bool lastState = false;
+  int count = 0;
+  volatile unsigned long lastChange = 0;
+};
+
+PostBoxSwitch switches[2] = { { "Switch_1", 12 }, 
+                              { "Switch_2", 13 }};
+int debounceMs = 200;         // To ignore button signals changes faster than this debounce ms
 int button = -1;              // Variable to store the button which triggered the bootup
 int wake = 14;                // Pin which is used to Keep ESP awake until job is finished
-int buttonState = 0;
-int counter[2] = {0, 0};
-volatile unsigned long lastTime =0;
 bool wakeUpPublished = false;
 
 int debounceMs = 200;         // To ignore button signals changes faster than this debounce ms
@@ -66,10 +74,10 @@ void publishWakeUp(String topic_end){
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage());
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 
-  int sizeArray = sizeof buttons / sizeof *buttons;
-  for(int i=0; i< sizeArray; i++) {
-    msg_pub = msg_pub + " ,\"GPIO_" + buttons[i] + "_counter\": " + String(counter[i]);
-    msg_pub = msg_pub + " ,\"GPIO_" + buttons[i] + "_state\": " + (digitalRead(buttons[i]) == HIGH ? "true" : "false");
+  int countSwitches = sizeof switches / sizeof *switches;
+  for(int i=0; i< countSwitches; i++) {
+    msg_pub = msg_pub + " ,\"GPIO_" + switches[i].pin + "_counter\": " + String(switches[i].count);
+    msg_pub = msg_pub + " ,\"GPIO_" + switches[i].pin + "_state\": " + (switches[i].state ? "true" : "false");
   }
 
   #ifdef USE_TP4056
@@ -84,15 +92,21 @@ void publishWakeUp(String topic_end){
 
 
 ICACHE_RAM_ATTR void detectsChange(int pin) {
-  if (millis() - lastTime < debounceMs) return; // ignore events faster than debounceMs
-  lastTime = millis();
 
-  int sizeArray = sizeof buttons / sizeof *buttons;
-  for(int i=0; i< sizeArray; i++) {
-    if (buttons[i] == pin){
+  int countSwitches = sizeof switches / sizeof *switches;
+  for(int i=0; i< countSwitches; i++) {
+    if (switches[i].pin == pin){
+      if (millis() - switches[i].lastChange < debounceMs) return; // ignore events faster than debounceMs
+      switches[i].lastChange = millis();
       if (digitalRead(pin) == HIGH){
-        counter[i]++;
+        switches[i].state = true;
+      } else 
+        switches[i].state = false;
+      if (switches[i].state && switches[i].lastState != switches[i].state ){
+        switches[i].count++;
       }
+      switches[i].lastState = switches[i].state;
+      Serial.printf(" -- GPIO %d count: %d\n", switches[i].pin, switches[i].count);
       Serial.printf(" -- GPIO %d count: %d\n", buttons[i], counter[i]);
       publishWakeUp("wakeup");
     return;
@@ -101,8 +115,8 @@ ICACHE_RAM_ATTR void detectsChange(int pin) {
 
 }
 
-ICACHE_RAM_ATTR void pin12ISR() {detectsChange(12);}
-ICACHE_RAM_ATTR void pin13ISR() {detectsChange(13);}
+ICACHE_RAM_ATTR void pin12ISR() {detectsChange(switches[0].pin);}
+ICACHE_RAM_ATTR void pin13ISR() {detectsChange(switches[1].pin);}
 
 
 void setupPostBox(void){
@@ -117,20 +131,20 @@ void setupPostBox(void){
   #endif
 
   //Check which button was pressed
-  int sizeArray = sizeof buttons / sizeof *buttons;
-  for(int i=0; i< sizeArray; i++) {
-    pinMode(buttons[i], INPUT);
-    if(digitalRead(buttons[i]) == HIGH) {
-      button = buttons[i];
-      counter[i]++;
+  int countSwitches = sizeof switches / sizeof *switches;
+  for(int i=0; i< countSwitches; i++) {
+    pinMode(switches[i].pin, INPUT);
+    if(digitalRead(switches[i].pin) == HIGH) {
+      button = switches[i].pin;
+      switches[i].count++;
       break;
     }
   }
 
   Serial.printf("\n -- Pin booter button: %d\n", button);
 
-  attachInterrupt(digitalPinToInterrupt(12), pin12ISR , CHANGE);
-  attachInterrupt(digitalPinToInterrupt(13), pin13ISR , CHANGE);
+  attachInterrupt(digitalPinToInterrupt(switches[0].pin), pin12ISR , CHANGE);
+  attachInterrupt(digitalPinToInterrupt(switches[1].pin), pin13ISR , CHANGE);
 
   // long bootDelay = millis() - connectionTime;
   long bootDelay = millis();
