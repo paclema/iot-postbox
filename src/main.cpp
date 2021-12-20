@@ -35,15 +35,15 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 struct  PostBoxSwitch{
   String name;
   int pin;
-  bool state = false;
-  bool lastState = false;
+  volatile int state = 0;
+  volatile int lastState = 0;
   int count = 0;
   volatile unsigned long lastChange = 0;
 };
 
 PostBoxSwitch switches[2] = { { "Switch_1", 12 }, 
                               { "Switch_2", 13 }};
-int debounceMs = 200;         // To ignore button signals changes faster than this debounce ms
+int debounceMs = 50;          // To ignore button signals changes faster than this debounce ms
 int button = -1;              // Variable to store the button which triggered the bootup
 int wake = 14;                // Pin which is used to Keep ESP awake until job is finished
 bool wakeUpPublished = false;
@@ -111,20 +111,40 @@ void updateLights(void){
 
 ICACHE_RAM_ATTR void detectsChange(int pin) {
 
+  int pinState = digitalRead(pin);
   int countSwitches = sizeof switches / sizeof *switches;
   for(int i=0; i< countSwitches; i++) {
-    if (switches[i].pin == pin){
-      if (millis() - switches[i].lastChange < debounceMs) return; // ignore events faster than debounceMs
+    if (pin == switches[i].pin){
+
+      // Ignore dupe readings
+      if ( switches[i].state == pinState) return;
+
+      // Ignore events faster than debounceMs
+      if (millis() - switches[i].lastChange < debounceMs) return;
+
       switches[i].lastChange = millis();
-      if (digitalRead(pin) == HIGH){
-        switches[i].state = true;
-      } else 
-        switches[i].state = false;
+      switches[i].state = pinState;
+
+      // Increase counter if pin status change from close to open
       if (switches[i].state && switches[i].lastState != switches[i].state ){
         switches[i].count++;
       }
+
+      // Handle LED strip on/off if for Switch_2:
+      if (switches[i].name == "Switch_2"){
+        if(switches[i].state && !switches[i].lastState){
+          strip.fill(strip.Color(255,255,255), 0, LED_COUNT);
+          strip.setBrightness(BRIGHTNESS);
+          strip.show();
+        } else if (!switches[i].state && switches[i].lastState){
+          strip.clear();
+          strip.show();
+        }
+      }
+      
+      Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", switches[i].pin, switches[i].state ? "true": "false", switches[i].lastState ? "true": "false", switches[i].count);
       switches[i].lastState = switches[i].state;
-      Serial.printf(" -- GPIO %d count: %d\n", switches[i].pin, switches[i].count);
+      
       if (setupDone) publishWakeUp("wakeup");
     return;
     }
@@ -146,6 +166,8 @@ void setupPostBox(void){
   pinMode(chrg, INPUT);
   pinMode(stdby, INPUT);
   #endif
+
+  strip.begin();
 
   //Check which button was pressed
   int countSwitches = sizeof switches / sizeof *switches;
@@ -171,13 +193,12 @@ void setupPostBox(void){
   // but probably caused by updating firmware by UART
   if (button == -1) WiFi.disconnect();
 
-  strip.begin();
-  strip.clear();
-
   updateLights();
 }
 
 void turnESPOff (void){
+    strip.clear();
+    strip.show();
     Serial.println("CH_PD disabled");
     delay(10);
     digitalWrite(wake, LOW); //Turns the ESP OFF
@@ -213,9 +234,19 @@ void setup() {
 
   mqttClient = config.getMQTTClient();
 
+  // Recheck switches state:
+  switches[0].state = digitalRead(switches[0].pin);
+  switches[0].lastState = switches[0].state;
+  switches[1].state = digitalRead(switches[1].pin);
+  switches[1].lastState = switches[1].state;
+  updateLights();
+
+
   publishWakeUp("wakeup");
   setupDone = true;
   Serial.println("###  Looping time\n");
+
+  Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", switches[1].pin, switches[1].state ? "true": "false", switches[1].lastState ? "true": "false", switches[1].count);
 
 }
 
@@ -241,13 +272,11 @@ void loop() {
   // }
 
   // Main Loop:
-  updateLights();
-  
+
   if(mqttClient->connected() && (config.device.publish_time_ms != 0) &&
       (currentLoopMillis - previousPublishMillis > (unsigned)config.device.publish_time_ms)) {
     previousPublishMillis = currentLoopMillis;
     // Here starts the MQTT publish loop configured:
-
 
     if (config.services.deep_sleep.enabled) {
       String topic = config.getDeviceTopic() + "sleepCountdown";
@@ -257,9 +286,7 @@ void loop() {
       mqttClient->publish(topic.c_str(), msg_pub.c_str());
     }
 
-    
     publishWakeUp("data");
-
   }
 
   previousMainLoopMillis = currentLoopMillis;
