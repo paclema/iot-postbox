@@ -39,8 +39,7 @@ int debounceMs = 200;         // To ignore button signals changes faster than th
 int button = -1;              // Variable to store the button which triggered the bootup
 int wake = 14;                // Pin which is used to Keep ESP awake until job is finished
 bool wakeUpPublished = false;
-
-int debounceMs = 200;         // To ignore button signals changes faster than this debounce ms
+bool setupDone = false;
 
 //Using tp4056 charger with battery fedback to ADC0 (max 1v!) and tp4056 chrg and stdby pins feedback:
 #define USE_TP4056
@@ -107,8 +106,7 @@ ICACHE_RAM_ATTR void detectsChange(int pin) {
       }
       switches[i].lastState = switches[i].state;
       Serial.printf(" -- GPIO %d count: %d\n", switches[i].pin, switches[i].count);
-      Serial.printf(" -- GPIO %d count: %d\n", buttons[i], counter[i]);
-      publishWakeUp("wakeup");
+      if (setupDone) publishWakeUp("wakeup");
     return;
     }
   }
@@ -191,6 +189,8 @@ void setup() {
 
   mqttClient = config.getMQTTClient();
 
+  publishWakeUp("wakeup");
+  setupDone = true;
   Serial.println("###  Looping time\n");
 
 }
