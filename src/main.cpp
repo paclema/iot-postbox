@@ -23,6 +23,14 @@ WebConfigServer config;   // <- global configuration object
 PubSubClient * mqttClient;
 
 
+// WS2812B LED strip
+#include <Adafruit_NeoPixel.h>
+#define LED_PIN    15 //GPIO15
+#define LED_COUNT  4
+#define BRIGHTNESS 150
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+
 // PostBox:
 struct  PostBoxSwitch{
   String name;
@@ -89,6 +97,17 @@ void publishWakeUp(String topic_end){
   wakeUpPublished = mqttClient->publish(topic.c_str(), msg_pub.c_str());
 }
 
+void updateLights(void){
+  // If Switch_2 (used while opening the postbox) is on, turn on the lights
+  if(digitalRead(switches[1].pin)){
+    strip.fill(strip.Color(255,255,255), 0, LED_COUNT);
+    strip.setBrightness(BRIGHTNESS);
+    strip.show();
+  } else {
+    strip.clear();
+    strip.show();
+  }
+}
 
 ICACHE_RAM_ATTR void detectsChange(int pin) {
 
@@ -150,7 +169,12 @@ void setupPostBox(void){
 
   // Disconnect wifi if the reboot was not originated by GPIOs
   // but probably caused by updating firmware by UART
-  if (button == -1) WiFi.disconnect();  
+  if (button == -1) WiFi.disconnect();
+
+  strip.begin();
+  strip.clear();
+
+  updateLights();
 }
 
 void turnESPOff (void){
@@ -217,6 +241,8 @@ void loop() {
   // }
 
   // Main Loop:
+  updateLights();
+  
   if(mqttClient->connected() && (config.device.publish_time_ms != 0) &&
       (currentLoopMillis - previousPublishMillis > (unsigned)config.device.publish_time_ms)) {
     previousPublishMillis = currentLoopMillis;
