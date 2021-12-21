@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 1 1
 Title "IoT-PostBox"
 Date "2021-07-08"
-Rev "v0.1"
+Rev "v0.2"
 Comp ""
 Comment1 "https://github.com/paclema/iot-postbox"
 Comment2 "IoT-PostBox board based on ESP8266 (ESP-12 or ESP-07)"
@@ -181,13 +181,11 @@ Wire Wire Line
 	4700 6350 4700 6550
 Wire Wire Line
 	4200 6550 4700 6550
-Text Label 4550 6550 2    50   ~ 0
-GPIO13
 $Comp
-L Device:R R6
+L Device:R R7
 U 1 1 60B3CBFB
 P 4700 6850
-F 0 "R6" H 4770 6896 50  0000 L CNN
+F 0 "R7" H 4770 6896 50  0000 L CNN
 F 1 "10K" H 4770 6805 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric" V 4630 6850 50  0001 C CNN
 F 3 "~" H 4700 6850 50  0001 C CNN
@@ -215,10 +213,10 @@ Wire Wire Line
 Text Label 5650 6550 2    50   ~ 0
 GPIO12
 $Comp
-L Device:R R7
+L Device:R R6
 U 1 1 60B42581
 P 5800 6850
-F 0 "R7" H 5870 6896 50  0000 L CNN
+F 0 "R6" H 5870 6896 50  0000 L CNN
 F 1 "10K" H 5870 6805 50  0000 L CNN
 F 2 "Resistor_SMD:R_0805_2012Metric" V 5730 6850 50  0001 C CNN
 F 3 "~" H 5800 6850 50  0001 C CNN
@@ -1077,28 +1075,6 @@ IN+
 Text Label 4400 3200 0    50   ~ 0
 OUT
 $Comp
-L Connector_Generic:Conn_01x02 J2
-U 1 1 60B5CB01
-P 6000 6250
-F 0 "J2" H 6080 6242 50  0000 L CNN
-F 1 "Switch_2" H 6080 6151 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 6000 6250 50  0001 C CNN
-F 3 "~" H 6000 6250 50  0001 C CNN
-	1    6000 6250
-	1    0    0    -1  
-$EndComp
-$Comp
-L Connector_Generic:Conn_01x02 J1
-U 1 1 60B69ADF
-P 4900 6250
-F 0 "J1" H 4980 6242 50  0000 L CNN
-F 1 "Switch_1" H 4980 6151 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 4900 6250 50  0001 C CNN
-F 3 "~" H 4900 6250 50  0001 C CNN
-	1    4900 6250
-	1    0    0    -1  
-$EndComp
-$Comp
 L ttl_to_usb_adapter:TTL_UART_adapter_iot_postbox U2
 U 1 1 60E75D33
 P 1500 7350
@@ -1135,4 +1111,28 @@ Wire Notes Line
 	6500 5300 6500 7650
 Text Notes 700  1250 0    50   ~ 0
 For ESP-07s pull-ups/down resistors are not required for RST,\nGPIO0, GPIO2 and GPIO15
+$Comp
+L Connector_Generic:Conn_01x02 J1
+U 1 1 60B5CB01
+P 6000 6250
+F 0 "J1" H 6080 6242 50  0000 L CNN
+F 1 "Switch_1" H 6080 6151 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 6000 6250 50  0001 C CNN
+F 3 "~" H 6000 6250 50  0001 C CNN
+	1    6000 6250
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J2
+U 1 1 60B69ADF
+P 4900 6250
+F 0 "J2" H 4980 6242 50  0000 L CNN
+F 1 "Switch_2" H 4980 6151 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 4900 6250 50  0001 C CNN
+F 3 "~" H 4900 6250 50  0001 C CNN
+	1    4900 6250
+	1    0    0    -1  
+$EndComp
+Text Label 4550 6550 2    50   ~ 0
+GPIO13
 $EndSCHEMATC
