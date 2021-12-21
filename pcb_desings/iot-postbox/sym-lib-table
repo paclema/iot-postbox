@@ -1,8 +1,8 @@
 (sym_lib_table
-  (lib (name wemos_mini)(type Legacy)(uri ${KICAD_TEMPLATE_DIR}/d1_mini_kicad/library/wemos_mini.lib)(options "")(descr ""))
   (lib (name charger_stepup-cache)(type Legacy)(uri ${KIPRJMOD}/libs/tp4056/charger_stepup-cache.lib)(options "")(descr ""))
   (lib (name dw01)(type Legacy)(uri ${KIPRJMOD}/libs/tp4056/lib/dw01.lib)(options "")(descr ""))
   (lib (name fs8205a)(type Legacy)(uri ${KIPRJMOD}/libs/tp4056/lib/fs8205a.lib)(options "")(descr ""))
   (lib (name tp4056)(type Legacy)(uri ${KIPRJMOD}/libs/tp4056/lib/tp4056.lib)(options "")(descr ""))
   (lib (name ttl_to_usb_adapter)(type Legacy)(uri ${KIPRJMOD}/libs/ttl_to_usb_adapter/ttl_to_usb_adapter.lib)(options "")(descr ""))
+  (lib (name iot-postbox-rescue)(type Legacy)(uri ${KIPRJMOD}/iot-postbox-rescue.lib)(options "")(descr ""))
 )
