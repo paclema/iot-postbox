@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 1 1
 Title "IoT-PostBox"
 Date "2021-07-08"
-Rev "v0.2"
+Rev "v0.3"
 Comp ""
 Comment1 "https://github.com/paclema/iot-postbox"
 Comment2 "IoT-PostBox board based on ESP8266 (ESP-12 or ESP-07)"
@@ -1135,4 +1135,52 @@ F 3 "~" H 4900 6250 50  0001 C CNN
 $EndComp
 Text Label 4550 6550 2    50   ~ 0
 GPIO13
+$Comp
+L Connector_Generic:Conn_01x03 J7
+U 1 1 61C271A5
+P 8750 5700
+F 0 "J7" H 8830 5742 50  0000 L CNN
+F 1 "LED" H 8830 5651 50  0000 L CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 8750 5700 50  0001 C CNN
+F 3 "~" H 8750 5700 50  0001 C CNN
+	1    8750 5700
+	1    0    0    -1  
+$EndComp
+Text Label 2350 3300 0    50   ~ 0
+GPIO15
+Text Label 8550 5700 2    50   ~ 0
+GPIO15
+Text GLabel 8400 5450 1    50   Input ~ 0
+VCC
+$Comp
+L power:GND #PWR05
+U 1 1 61C4413E
+P 8400 5850
+F 0 "#PWR05" H 8400 5600 50  0001 C CNN
+F 1 "GND" H 8405 5677 50  0000 C CNN
+F 2 "" H 8400 5850 50  0001 C CNN
+F 3 "" H 8400 5850 50  0001 C CNN
+	1    8400 5850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8550 5800 8400 5800
+Wire Wire Line
+	8400 5800 8400 5850
+Wire Wire Line
+	8550 5700 8250 5700
+Wire Wire Line
+	8550 5600 8400 5600
+Wire Wire Line
+	8400 5600 8400 5450
+Wire Notes Line
+	9500 6450 8050 6450
+Wire Notes Line
+	8050 6450 8050 4700
+Wire Notes Line
+	8050 4700 9500 4700
+Wire Notes Line
+	9500 4700 9500 6450
+Text Notes 8900 5100 2    118  ~ 0
+LED strip\nWS2812b
 $EndSCHEMATC
