@@ -35,14 +35,14 @@ Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 struct  PostBoxSwitch{
   String name;
   int pin;
-  volatile int state = 0;
-  volatile int lastState = 0;
-  int count = 0;
-  volatile unsigned long lastChange = 0;
+  volatile int state;
+  volatile int lastState;
+  int count;
+  volatile unsigned long lastChange;
 };
 
-PostBoxSwitch switches[2] = { { "Switch_1", 12 }, 
-                              { "Switch_2", 13 }};
+PostBoxSwitch switches[2] = { { "Switch_1", 12, 0, 0, 0, 0}, 
+                              { "Switch_2", 13, 0, 0, 0, 0}};
 int debounceMs = 50;          // To ignore button signals changes faster than this debounce ms
 int button = -1;              // Variable to store the button which triggered the bootup
 int wake = 14;                // Pin which is used to Keep ESP awake until job is finished
