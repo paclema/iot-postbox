@@ -1,3 +1,4 @@
 (fp_lib_table
   (lib (name "Espressif")(type "KiCad")(uri "${KIPRJMOD}/../libs/Espressif/footprints/Espressif.pretty")(options "")(descr ""))
+  (lib (name "iot-postbox")(type "KiCad")(uri "${KIPRJMOD}/../libs/iot-postbox.pretty")(options "")(descr ""))
 )

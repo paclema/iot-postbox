@@ -1,3 +1,4 @@
 (sym_lib_table
   (lib (name "Espressif")(type "Legacy")(uri "${KIPRJMOD}/../libs/Espressif/libraries/Espressif.lib")(options "")(descr ""))
+  (lib (name "iot-postbox")(type "KiCad")(uri "${KIPRJMOD}/../libs/iot-postbox/iot-postbox.kicad_sym")(options "")(descr ""))
 )
