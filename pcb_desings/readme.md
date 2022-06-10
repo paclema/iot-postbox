@@ -1,4 +1,5 @@
-##IoT-PostBox  PCB desings:
+## IoT-PostBox  PCB desings: ##
+
 Here you will find some KiCad desings for this project. There are several versions and the main differences are:
 
 * [**IoT-postbox**](iot-postbox/)
