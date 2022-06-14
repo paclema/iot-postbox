@@ -1,6 +1,6 @@
 {
   "network": {
-    "AP_SSID": "iotpostbox",
+    "AP_SSID": "iotpostbox_v1",
     "AP_password": "iotpostboxpwd",
     "AP_channel": 6,
     "AP_SSID_hidden": false,
@@ -11,7 +11,7 @@
     "ip_address": "192.168.1.2",
     "subnet": "255.255.255.0",
     "dns_Server": "192.168.1.1",
-    "hostname": "iotpostbox",
+    "hostname": "iotpostbox_v1",
     "enable_NAT": false
   },
   "mqtt": {
@@ -19,7 +19,7 @@
     "reconnect_mqtt": false,
     "server": "broker.ddns.net",
     "port": 1883,
-    "id_name": "iot-postbox",
+    "id_name": "iot-postbox_v1",
     "enable_user_and_pass": true,
     "user_name": "user_name",
     "user_password": "user_password",
@@ -85,6 +85,6 @@
   "info": {
     "restart_counter": 0,
     "fw_version": "v0.1",
-    "repo": "github.com/paclema/iot_button"
+    "repo": "github.com/paclema/iot-postbox"
   }
 }
