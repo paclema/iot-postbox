@@ -58,6 +58,12 @@ bool wakeUpPublished = false;
 bool setupDone = false;
 
 
+// PostBox sleep configs
+// ---------------------
+#define BUTTON_PIN_BITMASK 0x10 // GPIO4 --> 2^4 in hex
+RTC_DATA_ATTR int bootCount = 0;
+
+
 // Battery charger feedback
 // ------------------------
 #ifdef ARDUINO_IOTPOSTBOX_V1
@@ -95,6 +101,78 @@ float readVoltage() {
   return -1;
 }
 
+
+void print_wakeup_reason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : {
+      uint64_t GPIO_reason = esp_sleep_get_wakeup_cause();
+      int gpioWake = log(GPIO_reason)/log(2);
+      Serial.printf("Wakeup caused by external signal using RTC_CNTL. GPIO: %d\n", gpioWake);
+      break;
+      }
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
+}
+
+
+void setupDeepSleep(){
+  //Increment boot number and print it every reboot
+  ++bootCount;
+  Serial.println("Boot number: " + String(bootCount));
+  print_wakeup_reason();
+
+  /*
+  First we configure the wake up source
+  We set our ESP32 to wake up for an external trigger.
+  There are two types for ESP32, ext0 and ext1 .
+  ext0 uses RTC_IO to wakeup thus requires RTC peripherals
+  to be on while ext1 uses RTC Controller so doesnt need
+  peripherals to be powered on.
+  Note that using internal pullups/pulldowns also requires
+  RTC peripherals to be turned on.
+  */
+
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON); // all RTC Peripherals are powered on
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF); // all RTC Peripherals are powered off
+
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_XTAL, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC8M, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_VDDSDIO, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_MAX, ESP_PD_OPTION_OFF);
+
+  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); // ESP32 wakes up every 5 seconds
+  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_4,1); //1 = High, 0 = Low
+  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_4,1); //1 = High, 0 = Low
+  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
+}
+
+
+void turnESPOff (void){
+  strip.clear();
+  strip.show();
+  digitalWrite(LDO2_EN_PIN, LOW);
+  Serial.println("CH_PD disabled");
+  delay(10);
+
+  //TODO: RUTINE FOR ESP32S2 
+  #ifndef ARDUINO_IOTPOSTBOX_V1
+    digitalWrite(KEEP_WAKE_PIN, LOW); //Turns the ESP OFF
+  #endif
+  esp_wifi_stop();
+  delay(100);
+  esp_deep_sleep_start();
+}
+
+
 void publishWakeUp(String topic_end){
 
   String topic = config.getDeviceTopic() + topic_end;
@@ -121,7 +199,6 @@ void publishWakeUp(String topic_end){
   #endif
   msg_pub +=" }";
 
-
   wakeUpPublished = mqttClient->publish(topic.c_str(), msg_pub.c_str());
 }
 
@@ -146,8 +223,8 @@ void updateLights(void){
 
 void setupPostBox(void){
 
-  // ESP Awake Pin, the pin which keeps CH_PD HIGH, a requirement for normal functioning of ESP8266
   #ifndef ARDUINO_IOTPOSTBOX_V1
+  // ESP wake Pin, the pin which keeps CH_PD HIGH, a requirement for normal functioning of ESP8266
   pinMode(KEEP_WAKE_PIN, OUTPUT);
   digitalWrite(KEEP_WAKE_PIN, HIGH);
   #else
@@ -159,6 +236,8 @@ void setupPostBox(void){
   pinMode(CHRG_PIN, INPUT);
   pinMode(STDBY_PIN, INPUT);
   #endif
+
+  setupDeepSleep();
 
   strip.begin();
 
@@ -185,17 +264,6 @@ void setupPostBox(void){
   // if (button == -1) WiFi.disconnect();
 
   updateLights();
-}
-
-void turnESPOff (void){
-    strip.clear();
-    strip.show();
-    Serial.println("CH_PD disabled");
-    delay(10);
-    #ifndef ARDUINO_IOTPOSTBOX_V1
-      digitalWrite(KEEP_WAKE_PIN, LOW); //Turns the ESP OFF
-    #endif
-    //TODO: RUTINE FOR ESP32S2 
 }
 
 
@@ -253,7 +321,7 @@ void loop() {
     else config.services.deep_sleep.enabled = true;  
     // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
   #else
-    if ( !wakeUpPublished ) config.services.deep_sleep.enabled = false;    
+    // if ( !wakeUpPublished ) config.services.deep_sleep.enabled = false;    
     // else config.services.deep_sleep.enabled = true; 
     // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
 
