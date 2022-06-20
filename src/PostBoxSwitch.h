@@ -1,13 +1,3 @@
-
-// PostBox:
-// struct  PostBoxSwitch{
-//   String name;
-//   int pin;
-//   volatile int state;
-//   volatile int lastState;
-//   int count;
-//   volatile unsigned long lastChange;
-// };
 #ifndef PostBoxSwitch_H
 #define PostBoxSwitch_H
 #include <Arduino.h>
@@ -76,7 +66,7 @@ private:
 
 	volatile bool newChange;
 
-	int debounceMs = 50;          // To ignore button signals changes faster than this debounce ms
+	const uint8_t debounceMs = 50;          // To ignore button signals changes faster than this debounce ms
 
 };
 
