@@ -8,7 +8,10 @@ PostBox::PostBox(void) :
 
 }
 
-void PostBox::setupPostBox(void) {
+PostBox::~PostBox(void) {
+}
+
+void PostBox::setup(void) {
   #ifndef ARDUINO_IOTPOSTBOX_V1
   // ESP wake Pin, the pin which keeps CH_PD HIGH, a requirement for normal functioning of ESP8266
   pinMode(KEEP_WAKE_PIN, OUTPUT);
@@ -42,7 +45,7 @@ void PostBox::setupPostBox(void) {
 
 
   // long bootDelay = millis() - connectionTime;
-  long bootDelay = millis();
+  // long bootDelay = millis();
   // Serial.printf("\tbootDelay: %ld - pin booter: %d\n", bootDelay, button);
 
   // Disconnect wifi if the reboot was not originated by GPIOs
@@ -51,6 +54,73 @@ void PostBox::setupPostBox(void) {
 
   updateLedStrip();
 }
+
+void PostBox::init(void) {
+
+  // Recheck switches state:
+  sw1.readCurrentState();
+  sw2.readCurrentState();
+
+  publishWakeUp("wakeup");
+
+  Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw1.getPin(), sw1.getState() ? "true": "false", sw1.getLastState() ? "true": "false", sw1.getCount());
+  Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw2.getPin(), sw2.getState() ? "true": "false", sw2.getLastState() ? "true": "false", sw2.getCount());
+}
+
+
+void PostBox::loop(void) {
+  #if defined(USE_TP4056) && defined(NO_SLEEP_WHILE_CHARGING)
+    if ( (!wakeUpPublished ) || !digitalRead(CHRG_PIN) == true ) config.services.deep_sleep.enabled = false;    
+    else config.services.deep_sleep.enabled = true;  
+    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
+  #else
+    // if ( !wakeUpPublished ) config.services.deep_sleep.enabled = false;    
+    // else config.services.deep_sleep.enabled = true; 
+    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
+
+  #endif
+
+  
+  // Check if there was an interrupt casued by one PostBoxSwitch
+  if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
+
+  // Check the PostBoxSwitch sw2 to tur on/off the LED strip
+  if (sw2.getState() != sw2.getLastState() ){  	
+    if(sw2.getState() && !sw2.getLastState()){
+  	ledStrip.fill(ledStrip.Color(255,255,255), 0, LED_COUNT);
+  	ledStrip.setBrightness(BRIGHTNESS);
+  	ledStrip.show();
+  	} else if (!sw2.getState() && sw2.getLastState()){
+  	ledStrip.clear();
+  	ledStrip.show();
+  	}
+  }
+
+  // Update PostBoxSwitch states for next loop
+  sw1.updateLastState();
+  sw2.updateLastState();
+
+}
+
+
+void PostBox::powerOff(void) {
+
+  ledStrip.clear();
+  ledStrip.show();
+  digitalWrite(LDO2_EN_PIN, LOW);
+  Serial.println("CH_PD disabled");
+  delay(10);
+
+  //TODO: RUTINE FOR ESP32S2 
+  #ifndef ARDUINO_IOTPOSTBOX_V1
+    digitalWrite(KEEP_WAKE_PIN, LOW); //Turns the ESP OFF
+  #endif
+  esp_wifi_stop();
+  delay(100);
+  esp_deep_sleep_start();
+  
+}
+
 
 float PostBox::readVoltage(void) {
 	#ifdef ARDUINO_IOTPOSTBOX_V1
@@ -70,7 +140,8 @@ float PostBox::readVoltage(void) {
 	return -1;
 }
 
-float PostBox::updateLedStrip(void) {
+
+void PostBox::updateLedStrip(void) {
   // If Switch_2 (used while opening the postbox) is on, turn on the lights
   // if(digitalRead(switches[1].pin)){
   bool lightMode = false;
@@ -111,7 +182,7 @@ void PostBox::setupDeepSleep(void) {
 	  //Increment boot number and print it every reboot
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
-  print_wakeup_reason();
+  printWakeupReason();
 
   /*
   First we configure the wake up source
@@ -150,14 +221,17 @@ void PostBox::turnOffDevice(void) {
   //TODO: RUTINE FOR ESP32S2 
   #ifndef ARDUINO_IOTPOSTBOX_V1
     digitalWrite(KEEP_WAKE_PIN, LOW); //Turns the ESP OFF
+  #else degined(ARDUINO_IOTPOSTBOX_V1)
+  // TODO: add this functionality to WebConfigServer
+    esp_wifi_stop();
+    delay(100);
+    esp_deep_sleep_start();
   #endif
-  esp_wifi_stop();
-  delay(100);
-  esp_deep_sleep_start();
 }
 
-void PostBox::publishWakeUp(void) {
-  String topic = config.getDeviceTopic() + topic_end;
+void PostBox::publishWakeUp(String topic_end) {
+  String topic = MQTTBaseTopic + topic_end;
+  
   String msg_pub ="{\"wake_up_pin\": ";
   msg_pub += String(button);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage());
@@ -180,6 +254,6 @@ void PostBox::publishWakeUp(void) {
   msg_pub = msg_pub + " ,\"stdby\": " + !digitalRead(STDBY_PIN);
   #endif
   msg_pub +=" }";
-
-  wakeUpPublished = mqttClient->publish(topic.c_str(), msg_pub.c_str());
+  
+  wakeUpPublished = mqtt->publish(topic.c_str(), msg_pub.c_str());
 }

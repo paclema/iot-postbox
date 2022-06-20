@@ -1,11 +1,15 @@
 #ifndef PostBox_H
 #define PostBox_H
+
 #include <Arduino.h>
 
-
 #ifdef ESP32
-#elif defined(ESP8266)
+#include <esp_wifi.h>
+#include <WiFi.h>
 #endif
+
+
+#include <PubSubClient.h>
 
 
 // WS2812B LED strip
@@ -35,7 +39,7 @@
 // PostBox sleep configs
 // ---------------------
 #define BUTTON_PIN_BITMASK 0x10 // GPIO4 --> 2^4 in hex
-RTC_DATA_ATTR int bootCount = 0;
+RTC_DATA_ATTR static int bootCount = 0;
 
 
 // Battery charger feedback
@@ -67,9 +71,10 @@ public:
 	PostBoxSwitch sw1;
 	PostBoxSwitch sw2;
 
-	int button = -1;              // Variable to store the button which triggered the bootup
-	bool wakeUpPublished = false;
-	bool setupDone = false;
+
+	String MQTTBaseTopic;
+	PubSubClient *mqtt;
+
 
 
 
@@ -84,21 +89,31 @@ public:
 	PostBox(void);
 	~PostBox(void);
 
-	void setupPostBox(void);
+	void setup(void);
+	void init(void);
+	void loop(void);
+	void powerOff(void);
 
 	float readVoltage(void);
 
-	float updateLedStrip(void);
+	void updateLedStrip(void);
 
 	void printWakeupReason(void);
 	void setupDeepSleep(void);
 	void turnOffDevice(void);
 
-	void publishWakeUp(void);
+	void publishWakeUp(String topic_end);
+
+	void setMQTTBaseTopic(String topic) { MQTTBaseTopic = topic; }
+	void setMQTTClient(PubSubClient * client) { mqtt = client; }
 
 
 
 private:
+
+	bool wakeUpPublished = false;
+	int button = -1;              // Variable to store the button which triggered the bootup
+
 
 };
 
