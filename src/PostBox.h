@@ -66,7 +66,6 @@ RTC_DATA_ATTR static int bootCount = 0;
 class PostBox {
 public:
 	Adafruit_NeoPixel ledStrip;
-	// PostBoxSwitch sw1(0, "Switch_1");
 
 	PostBoxSwitch sw1;
 	PostBoxSwitch sw2;
@@ -77,14 +76,6 @@ public:
 
 
 
-
-	PostBox(uint8_t reqpin, String initName) : 
-		ledStrip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800), 
-		// sw1(0, "Switch_1"),
-		sw1(SW1_PIN, "Switch_1"),
-		sw2(SW2_PIN, "Switch_2") {
-
-	};
 
 	PostBox(void);
 	~PostBox(void);
