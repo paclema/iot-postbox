@@ -6,6 +6,15 @@
 #ifdef ESP32
 #include <esp_wifi.h>
 #include <WiFi.h>
+
+#pragma once
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
+
+//ADC Attenuation
+#define ADC_EXAMPLE_ATTEN	ADC_ATTEN_DB_6
+// #define ADC_WIDTH_BAT_SENSE	ADC_WIDTH_BIT_12
+
 #endif
 
 
@@ -60,8 +69,38 @@ RTC_DATA_ATTR static int bootCount = 0;
   #endif
 #endif
 
+enum class PowerStatus {
+    Unknown = 0,
+    BatteryPowered = 1,
+    USBPowered = 2,
+    BatteryAndUSBPowered = 3,
+};
+
+enum class ChargingStatus {
+    Unknown = 0,
+    Charging = 1,
+    NotCharging = 2,
+};
 
 
+// #define VBUS_SENSE          1
+// #define VBAT_SENSE          2
+// #define VBAT_STAT_SENSE     3
+
+// #define SW1_PIN             4
+// #define SW2_PIN             5
+
+// #define RFM95W_DIO0         6
+// #define RFM95W_DIO1         7
+// #define RFM95W_DIO2         8
+// #define RFM95W_DIO3         9
+// #define RFM95W_NSS          10
+// #define RFM95W_MOSI         11
+// #define RFM95W_SCK          12
+// #define RFM95W_MISO         13
+// #define RFM95W_RESET        14
+// #define RFM95W_DIO4         15
+// #define RFM95W_DIO5         16
 
 class PostBox {
 public:
@@ -74,6 +113,14 @@ public:
 	String MQTTBaseTopic;
 	PubSubClient *mqtt;
 
+	//States
+	PowerStatus powerStatus;
+	ChargingStatus chargingStatus;
+
+	// int VBUSState;
+	// int VBAT_STATUS_State;
+	float batVoltage = 0;
+	esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
 
 
 
@@ -85,6 +132,8 @@ public:
 	void loop(void);
 	void powerOff(void);
 
+	void adc_calibrate(void);
+	int analogRead_cal(uint8_t channel, adc_atten_t attenuation);
 	float readVoltage(void);
 
 	void updateLedStrip(void);

@@ -49,13 +49,18 @@ void turnESPOff (void){
 
 }
 
+// #include "driver/adc.h"
+// #include "esp_adc_cal.h"
+// #include "driver/soc_caps.h"
 
+#include <driver/adc.h>
 
 // Websocket functions to publish:
 String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);}
 String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
 String getVCC(){ return String((float)postbox.readVoltage());}
+String getCalVCC(){ return String((float)postbox.analogRead_cal(ADC1_CHANNEL_1 , ADC_ATTEN_DB_6));}
 
 
 
@@ -65,6 +70,14 @@ void setup() {
   #ifdef ENABLE_SERIAL_DEBUG
     Serial.setDebugOutput(true);
   #endif
+
+  //   ESP_ERROR_CHECK(adc1_config_width(SOC_ADC_MAX_BITWIDTH));
+  // ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_EXAMPLE_ATTEN));
+
+  adc1_config_width(ADC_WIDTH_BIT_13);
+  adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_6);
+
+
 
   postbox.setup();
   config.begin();
@@ -81,6 +94,7 @@ void setup() {
   config.addDashboardObject("loop", getLoopTime);
   config.addDashboardObject("RSSI", getRSSI);
   config.addDashboardObject("VCC", getVCC);
+  config.addDashboardObject("Cal_VCC", getCalVCC);
 
 
   Serial.println("###  Looping time\n");

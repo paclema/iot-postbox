@@ -19,6 +19,12 @@ void PostBox::setup(void) {
   #else
   pinMode(LDO2_EN_PIN, OUTPUT);
   digitalWrite(LDO2_EN_PIN, HIGH);
+
+  // Sense inputs
+  pinMode(VBUS_SENSE, INPUT);
+  pinMode(VBAT_SENSE, INPUT);
+  pinMode(VBAT_STAT_SENSE, INPUT);
+
   #endif
 
   #ifdef USE_TP4056
@@ -55,11 +61,45 @@ void PostBox::setup(void) {
   updateLedStrip();
 }
 
+#include "driver/adc.h"
+
 void PostBox::init(void) {
 
-  // Recheck switches state:
+  // Recheck switches state
   sw1.readCurrentState();
   sw2.readCurrentState();
+
+  //Check sense inputs
+  // batVoltage = analogRead(VBAT_SENSE);
+
+  ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_13));
+  ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_6));
+  // adc1_config_width(ADC_WIDTH_BAT_SENSE);
+  // adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_EXAMPLE_ATTEN);
+
+  // analogReadResolution(13);
+
+  adc_calibrate();
+  readVoltage();
+
+  
+  int vbus = digitalRead(VBUS_SENSE);
+  int vbat_stat = digitalRead(VBAT_STAT_SENSE);
+  Serial.printf(" -- VBUS_SENSE: %d VBAT_STAT_SENSE: %d batVoltage: %d\n", vbus, vbat_stat );
+
+  if( vbus == HIGH && vbat_stat == HIGH) powerStatus = PowerStatus::BatteryAndUSBPowered;
+  else if( vbus == HIGH) powerStatus = PowerStatus::USBPowered;
+  else if( vbat_stat == HIGH) powerStatus = PowerStatus::BatteryPowered;
+  else powerStatus = PowerStatus::Unknown;
+
+  int sume = 0;
+  sume = vbat_stat + 2 *vbus;
+  PowerStatus sumePower = (PowerStatus)sume;
+  Serial.printf(" -- PowerStatus: %d Sume: %d sumePower: %d\n", vbus, sume, sumePower );
+
+
+
+  
 
   publishWakeUp("wakeup");
 
@@ -122,10 +162,79 @@ void PostBox::powerOff(void) {
 }
 
 
+void PostBox::adc_calibrate(void){
+esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,ADC_ATTEN_DB_6, ADC_WIDTH_BIT_13, 0, adc_chars);
+}
+
+int PostBox::analogRead_cal(uint8_t channel, adc_atten_t attenuation) {
+  adc1_channel_t channelNum;
+
+  adc1_config_channel_atten(channelNum, attenuation);
+  return esp_adc_cal_raw_to_voltage(analogRead(channel), adc_chars);
+}
+
+// int PostBox::analogRead_no_cal(void) {
+
+//   adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_6);
+
+//   int adcVal = adc1_get_raw(ADC1_CHANNEL_1);
+//   float vout = adcVal * 1300 /
+//   return esp_adc_cal_raw_to_voltage(analogRead(channel), adc_chars);
+// }
+
 float PostBox::readVoltage(void) {
-	#ifdef ARDUINO_IOTPOSTBOX_V1
+	// #ifdef ARDUINO_IOTPOSTBOX_V1
 	//TODO: BATTERY, USB POWER AND CHARGING SENSE
-	return -1;
+  // batVoltage = analogRead(VBAT_SENSE);
+
+  float volts = -1;
+  //Characterize ADC at particular atten
+  // esp_adc_cal_characteristics_t *adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+
+  esp_err_t ret;
+  ret = esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP);
+  if (ret == ESP_ERR_NOT_SUPPORTED) {
+      Serial.printf( "Calibration scheme not supported, skip software calibration\n");
+  } else if (ret == ESP_ERR_INVALID_VERSION) {
+      Serial.printf( "eFuse not burnt, skip software calibration\n");
+  } else if (ret == ESP_OK) {
+      // Serial.printf( "eFuse burnt, software calibration can proceed\n");
+
+      // cali_enable = true;
+      // esp_adc_cal_characterize(ADC_UNIT_1, ADC_EXAMPLE_ATTEN, ADC_WIDTH_BIT_DEFAULT, 0, &adc1_chars);
+      // esp_adc_cal_characterize(ADC_UNIT_2, ADC_EXAMPLE_ATTEN, ADC_WIDTH_BIT_DEFAULT, 0, &adc2_chars);
+  
+
+
+      /*
+      esp_adc_cal_characteristics_t adc_chars;
+      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_6, ADC_WIDTH_BIT_DEFAULT, ESP_ADC_CAL_VAL_DEFAULT_VREF, &adc_chars);
+      //Check type of calibration value used to characterize ADC
+      if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+          Serial.printf("eFuse Vref\n");
+      } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+          Serial.printf("Two Point\n");
+      } else {
+          Serial.printf("Default\n");
+      }
+      */
+  }
+
+  int read_raw = adc1_get_raw(ADC1_CHANNEL_1);
+  // int adcv =  analogRead(VBAT_SENSE);
+  // int analogVolts = analogReadMilliVolts(VBAT_SENSE);
+  // int analogVolts = analogReadMilliVolts(VBAT_SENSE);
+  uint32_t analogVolts = esp_adc_cal_raw_to_voltage(read_raw, adc_chars);
+  // volts =  adcv;
+  
+  float vbat = analogVolts * (442 + 160)/160;
+
+  // Serial.printf("The internal VCC reads %1.3f volts. adcv: %d read_raw: %d. analogVolts: %d\n", volts/1000, adcv, read_raw, analogVolts);
+  Serial.printf("The internal VCC reads %dmV --> %1.3fV VoltageDivider: %1.3fV - read_raw: %d\n", analogVolts, (float)analogVolts/1000, vbat/1000, read_raw);
+	// return volts;
+	return vbat/1000;
+
+/*
 	#else
 	#ifdef USE_TP4056
 		int sensorValue = analogRead(A0);
@@ -133,11 +242,11 @@ float PostBox::readVoltage(void) {
 		Serial.printf("The internal VCC reads %1.3f volts. CHRG: %d - STDBY: %d\n", volts , !digitalRead(CHRG_PIN), !digitalRead(STDBY_PIN));
 	#else
 		float volts = ESP.getVcc();
-		Serial.printf("The internal VCC reads %1.3f volts\n", volts / 1000);
+		Serial.printf("The internal VCC reads %1.1f volts\n", volts / 1000);
 		return volts;
 	#endif
 	#endif
-	return -1;
+	return -1;*/
 }
 
 
