@@ -49,19 +49,12 @@ void turnESPOff (void){
 
 }
 
-// #include "driver/adc.h"
-// #include "esp_adc_cal.h"
-// #include "driver/soc_caps.h"
-
-#include <driver/adc.h>
 
 // Websocket functions to publish:
 String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);}
 String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
 String getVCC(){ return String((float)postbox.readVoltage());}
-String getCalVCC(){ return String((float)postbox.analogRead_cal(ADC1_CHANNEL_1 , ADC_ATTEN_DB_6));}
-
 
 
 void setup() {
@@ -70,13 +63,6 @@ void setup() {
   #ifdef ENABLE_SERIAL_DEBUG
     Serial.setDebugOutput(true);
   #endif
-
-  //   ESP_ERROR_CHECK(adc1_config_width(SOC_ADC_MAX_BITWIDTH));
-  // ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_EXAMPLE_ATTEN));
-
-  adc1_config_width(ADC_WIDTH_BIT_13);
-  adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_6);
-
 
 
   postbox.setup();
@@ -94,7 +80,6 @@ void setup() {
   config.addDashboardObject("loop", getLoopTime);
   config.addDashboardObject("RSSI", getRSSI);
   config.addDashboardObject("VCC", getVCC);
-  config.addDashboardObject("Cal_VCC", getCalVCC);
 
 
   Serial.println("###  Looping time\n");
@@ -117,22 +102,6 @@ void loop() {
   //   networkRestart();
   //   config.configureServer(&server);
   // }
-
-  // // Check if there was an interrupt casued by one PostBoxSwitch
-  // if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
-
-  // // Check the PostBoxSwitch sw2 to tur on/off the LED strip
-  // if (sw2.getState() != sw2.getLastState() ){  	
-  //   if(sw2.getState() && !sw2.getLastState()){
-  // 	strip.fill(strip.Color(255,255,255), 0, LED_COUNT);
-  // 	strip.setBrightness(BRIGHTNESS);
-  // 	strip.show();
-  // 	} else if (!sw2.getState() && sw2.getLastState()){
-  // 	strip.clear();
-  // 	strip.show();
-  // 	}
-  // }
-
 
 
   // Main Loop:
