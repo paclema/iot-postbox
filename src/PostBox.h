@@ -1,19 +1,33 @@
 #ifndef PostBox_H
 #define PostBox_H
 
+#pragma once
 #include <Arduino.h>
 
 #ifdef ESP32
 #include <esp_wifi.h>
 #include <WiFi.h>
 
-#pragma once
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
 
+//ADC Channels
+#define VBUS_ADC_CHANNEL	ADC1_CHANNEL_0
+#define VBAT_ADC_CHANNEL	ADC1_CHANNEL_1
+
 //ADC Attenuation
-#define ADC_EXAMPLE_ATTEN	ADC_ATTEN_DB_6
-// #define ADC_WIDTH_BAT_SENSE	ADC_WIDTH_BIT_12
+#define VBUS_ADC_ATTEN	ADC_ATTEN_DB_11
+#define VBAT_ADC_ATTEN	ADC_ATTEN_DB_6
+
+// Voltage divider coefficients:
+#define VBUS_R9		3.3		// R9 = 3.3KOhm
+#define VBUS_R10	2		// R10 = 2KOhm
+#define VBUS_VOLTAGE_DIVIDER_COEFICIENT		(VBUS_R9 + VBUS_R10) / VBUS_R10
+
+#define VBAT_R6		442		// R6 = 442KOhm
+#define VBAT_R7		160		// R7 = 160KOhm
+#define VBAT_VOLTAGE_DIVIDER_COEFICIENT 	(VBAT_R6 + VBAT_R7) / VBAT_R7
+
 
 #endif
 
@@ -83,9 +97,9 @@ enum class ChargingStatus {
 };
 
 
-// #define VBUS_SENSE          1
-// #define VBAT_SENSE          2
-// #define VBAT_STAT_SENSE     3
+#define VBUS_SENSE_PIN          1
+#define VBAT_SENSE_PIN          2
+#define VBAT_STAT_SENSE_PIN     3
 
 // #define SW1_PIN             4
 // #define SW2_PIN             5
@@ -119,8 +133,11 @@ public:
 
 	// int VBUSState;
 	// int VBAT_STATUS_State;
-	float batVoltage = 0;
-	esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
+	float vBat = 0;
+	float vBus = 0;
+	int vBatStat = 0;
+	esp_adc_cal_characteristics_t *VBAT_adc_chars = new esp_adc_cal_characteristics_t;
+	esp_adc_cal_characteristics_t *VBUS_adc_chars = new esp_adc_cal_characteristics_t;
 
 
 
@@ -132,8 +149,9 @@ public:
 	void loop(void);
 	void powerOff(void);
 
-	void adc_calibrate(void);
-	int analogRead_cal(uint8_t channel, adc_atten_t attenuation);
+	void initADC(void);
+	void updatedADC(void);
+	void updatePowerStatus(void);
 	float readVoltage(void);
 
 	void updateLedStrip(void);
