@@ -12,6 +12,7 @@
 #include "esp_adc_cal.h"
 
 //ADC Channels
+// -----------
 #define VBUS_ADC_CHANNEL	ADC1_CHANNEL_0
 #define VBAT_ADC_CHANNEL	ADC1_CHANNEL_1
 
@@ -27,7 +28,6 @@
 #define VBAT_R6		442		// R6 = 442KOhm
 #define VBAT_R7		160		// R7 = 160KOhm
 #define VBAT_VOLTAGE_DIVIDER_COEFICIENT 	(VBAT_R6 + VBAT_R7) / VBAT_R7
-
 
 #endif
 
@@ -97,24 +97,6 @@ enum class ChargingStatus {
 };
 
 
-#define VBUS_SENSE_PIN          1
-#define VBAT_SENSE_PIN          2
-#define VBAT_STAT_SENSE_PIN     3
-
-// #define SW1_PIN             4
-// #define SW2_PIN             5
-
-// #define RFM95W_DIO0         6
-// #define RFM95W_DIO1         7
-// #define RFM95W_DIO2         8
-// #define RFM95W_DIO3         9
-// #define RFM95W_NSS          10
-// #define RFM95W_MOSI         11
-// #define RFM95W_SCK          12
-// #define RFM95W_MISO         13
-// #define RFM95W_RESET        14
-// #define RFM95W_DIO4         15
-// #define RFM95W_DIO5         16
 
 class PostBox {
 public:
@@ -153,6 +135,9 @@ public:
 	void updatedADC(void);
 	void updatePowerStatus(void);
 	float readVoltage(void);
+	float getVBus(void) { return vBus;};
+	float getVBat(void) { return vBat;};
+	float getVBatStat(void) { return vBatStat;};
 
 	void updateLedStrip(void);
 

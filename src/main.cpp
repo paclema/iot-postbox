@@ -55,6 +55,9 @@ String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);
 String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
 String getVCC(){ return String((float)postbox.readVoltage());}
+String getVBat(){ return String((float)postbox.getVBat()/1000);}
+String getVBus(){ return String((float)postbox.getVBus()/1000);}
+String getVBatStat(){ return String(postbox.getVBatStat() ? "true" : "false");}
 
 
 void setup() {
@@ -80,6 +83,9 @@ void setup() {
   config.addDashboardObject("loop", getLoopTime);
   config.addDashboardObject("RSSI", getRSSI);
   config.addDashboardObject("VCC", getVCC);
+  config.addDashboardObject("VBat", getVBat);
+  config.addDashboardObject("VBus", getVBus);
+  config.addDashboardObject("VBatStat", getVBatStat);
 
 
   Serial.println("###  Looping time\n");

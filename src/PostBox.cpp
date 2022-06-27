@@ -165,10 +165,10 @@ void PostBox::initADC(void){
       */
 
       adc1_config_channel_atten(VBUS_ADC_CHANNEL, VBUS_ADC_ATTEN);
-      // esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBUS_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBUS_adc_chars);
+      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBUS_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBUS_adc_chars);
 
       adc1_config_channel_atten(VBAT_ADC_CHANNEL, VBAT_ADC_ATTEN);
-      // esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBAT_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBAT_adc_chars);
+      esp_adc_cal_value_t val_type2 = esp_adc_cal_characterize(ADC_UNIT_1,VBAT_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBAT_adc_chars);
       
   }
 
@@ -182,13 +182,13 @@ void PostBox::updatedADC(void){
   int vBat_raw = adc1_get_raw(VBAT_ADC_CHANNEL);
   uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBat_raw, VBAT_adc_chars);
   vBat = vBat_ADCVolts * VBAT_VOLTAGE_DIVIDER_COEFICIENT;
-  Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBat_raw: %d\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000, vBat_raw);
+  // Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBat_raw: %d\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000, vBat_raw);
 
 
   int vBus_raw = adc1_get_raw(VBUS_ADC_CHANNEL);
   uint32_t vBus_ADCVolts = esp_adc_cal_raw_to_voltage(vBus_raw, VBUS_adc_chars);
   vBus = vBus_ADCVolts * VBUS_VOLTAGE_DIVIDER_COEFICIENT;
-  Serial.printf("VBUS sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBus_raw: %d\n", vBus_ADCVolts, (float)vBus_ADCVolts/1000, vBus/1000, vBus_raw);
+  // Serial.printf("VBUS sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBus_raw: %d\n", vBus_ADCVolts, (float)vBus_ADCVolts/1000, vBus/1000, vBus_raw);
 
 
 
@@ -198,10 +198,9 @@ void PostBox::updatedADC(void){
 void PostBox::updatePowerStatus(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
   updatedADC();
-
-
   vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
-  Serial.printf(" -- vBus: %d VBAT_STAT_SENSE_PIN: %d vBat: %d\n", vBus, vBatStat, vBat);
+
+  // Serial.printf(" -- vBus: %1.3fV VBAT_STAT_SENSE_PIN: %d vBat: %1.3fV\n", vBus/1000, vBatStat, vBat/1000);
 
   // if( vbus == HIGH && vbat_stat == HIGH) powerStatus = PowerStatus::BatteryAndUSBPowered;
   // else if( vbus == HIGH) powerStatus = PowerStatus::USBPowered;
