@@ -29,6 +29,8 @@
 #define VBAT_R7		160		// R7 = 160KOhm
 #define VBAT_VOLTAGE_DIVIDER_COEFICIENT 	(VBAT_R6 + VBAT_R7) / VBAT_R7
 
+#define ADC_SAMPLES 10
+
 #endif
 
 
@@ -46,7 +48,7 @@
 #endif
 
 #define LED_COUNT  4
-#define BRIGHTNESS 150
+#define BRIGHTNESS 10
 
 
 // PostBoxSwitch sensors
@@ -110,14 +112,16 @@ public:
 	PubSubClient *mqtt;
 
 	//States
-	PowerStatus powerStatus;
-	ChargingStatus chargingStatus;
+	PowerStatus powerStatus = PowerStatus::Unknown;
+	ChargingStatus chargingStatus = ChargingStatus::Unknown;
 
-	// int VBUSState;
-	// int VBAT_STATUS_State;
-	float vBat = 0;
-	float vBus = 0;
-	int vBatStat = 0;
+	float vBatReadings[ADC_SAMPLES];
+	int vBatReadIndex = 0;
+	int vBatReadTotal = 0;
+
+	float vBat = 0;		// Values in mV
+	float vBus = 0;		// Values in mV
+	int vBatStat = 0;	// Charging = 1, Not charging = 0
 	esp_adc_cal_characteristics_t *VBAT_adc_chars = new esp_adc_cal_characteristics_t;
 	esp_adc_cal_characteristics_t *VBUS_adc_chars = new esp_adc_cal_characteristics_t;
 
@@ -137,7 +141,27 @@ public:
 	float readVoltage(void);
 	float getVBus(void) { return vBus;};
 	float getVBat(void) { return vBat;};
+	float getVBatNow(void) { 
+		uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBatReadings[vBatReadIndex], VBAT_adc_chars);
+		return vBat_ADCVolts * (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+		};
 	float getVBatStat(void) { return vBatStat;};
+
+
+	void ISR_FLAG isrCharging(){
+		int pinState = digitalRead(VBAT_STAT_SENSE_PIN);
+		// Serial.printf(" ----  pinState: %d\n", pinState);
+
+		if (pinState == HIGH) chargingStatus = ChargingStatus::NotCharging;
+		else if (pinState == LOW) chargingStatus = ChargingStatus::Charging;
+		else chargingStatus = ChargingStatus::Unknown;
+
+		Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  pinState ? "true": "false", chargingStatus);
+	};
+	ChargingStatus getChargingStatus(void) { return chargingStatus;};
+	PowerStatus getPowerStatus(void) { return powerStatus;};
+
+
 
 	void updateLedStrip(void);
 

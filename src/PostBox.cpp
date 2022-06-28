@@ -24,6 +24,7 @@ void PostBox::setup(void) {
   pinMode(VBUS_SENSE_PIN, INPUT);
   pinMode(VBAT_SENSE_PIN, INPUT);
   pinMode(VBAT_STAT_SENSE_PIN, INPUT);
+  attachInterrupt(VBAT_STAT_SENSE_PIN, std::bind(&PostBox::isrCharging,this), CHANGE);
 
   #endif
 
@@ -68,10 +69,13 @@ void PostBox::init(void) {
   sw1.readCurrentState();
   sw2.readCurrentState();
 
+  isrCharging();
+
   //Check sense inputs
   initADC();
   updatePowerStatus();
   readVoltage();
+
 
 
   publishWakeUp("wakeup");
@@ -172,6 +176,7 @@ void PostBox::initADC(void){
       
   }
 
+  for (int i = 0; i < ADC_SAMPLES; i++) vBatReadings[i] = 0;
 
 }
 
@@ -180,9 +185,28 @@ void PostBox::updatedADC(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
 
   int vBat_raw = adc1_get_raw(VBAT_ADC_CHANNEL);
-  uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBat_raw, VBAT_adc_chars);
-  vBat = vBat_ADCVolts * VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  // uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBat_raw, VBAT_adc_chars);
+  // vBat = vBat_ADCVolts * VBAT_VOLTAGE_DIVIDER_COEFICIENT;
   // Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBat_raw: %d\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000, vBat_raw);
+
+  bool printFlag = false;
+
+  vBatReadTotal = vBatReadTotal - vBatReadings[vBatReadIndex];
+  vBatReadings[vBatReadIndex] = vBat_raw;
+  vBatReadTotal = vBatReadTotal + vBatReadings[vBatReadIndex];
+  vBatReadIndex = vBatReadIndex + 1;
+  if (vBatReadIndex >= ADC_SAMPLES) {
+
+    vBatReadIndex = 0;
+    printFlag = true;
+
+  } else printFlag = false;
+
+  // vBat = vBatReadTotal / ADC_SAMPLES;
+  uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBatReadTotal / ADC_SAMPLES, VBAT_adc_chars);
+  vBat = vBat_ADCVolts * (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  float t = (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  // if (printFlag) Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV --> %1.2fV- vBat_raw: %d VBAT_VOLTAGE_DIVIDER_COEFICIENT: %1.4f\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000,vBat/1000, vBat_raw, t);
 
 
   int vBus_raw = adc1_get_raw(VBUS_ADC_CHANNEL);
@@ -202,13 +226,14 @@ void PostBox::updatePowerStatus(void){
 
   // Serial.printf(" -- vBus: %1.3fV VBAT_STAT_SENSE_PIN: %d vBat: %1.3fV\n", vBus/1000, vBatStat, vBat/1000);
 
-  // if( vbus == HIGH && vbat_stat == HIGH) powerStatus = PowerStatus::BatteryAndUSBPowered;
-  // else if( vbus == HIGH) powerStatus = PowerStatus::USBPowered;
-  // else if( vbat_stat == HIGH) powerStatus = PowerStatus::BatteryPowered;
+  // if (vBus >= 100){
+  //   if (vBatStat == HIGH) powerStatus = PowerStatus::BatteryAndUSBPowered;
+  //   else if( vBatStat == LOW) powerStatus = PowerStatus::USBPowered;
+  // } else if( vBatStat == HIGH) powerStatus = PowerStatus::BatteryPowered;
   // else powerStatus = PowerStatus::Unknown;
 
   // int sume = 0;
-  // sume = vbat_stat + 2 *vbus;
+  // sume = vBatStat + 2 *vbus;
   // PowerStatus sumePower = (PowerStatus)sume;
   // Serial.printf(" -- PowerStatus: %d Sume: %d sumePower: %d\n", vbus, sume, sumePower );
 

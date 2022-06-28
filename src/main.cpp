@@ -56,8 +56,11 @@ String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
 String getVCC(){ return String((float)postbox.readVoltage());}
 String getVBat(){ return String((float)postbox.getVBat()/1000);}
+String getVBatNow(){ return String((float)postbox.getVBatNow()/1000);}
 String getVBus(){ return String((float)postbox.getVBus()/1000);}
 String getVBatStat(){ return String(postbox.getVBatStat() ? "true" : "false");}
+String getChargingStatus(){ return String((int)postbox.getChargingStatus());}
+String getPowerStatus(){ return String((int)postbox.getPowerStatus());}
 
 
 void setup() {
@@ -84,8 +87,11 @@ void setup() {
   config.addDashboardObject("RSSI", getRSSI);
   config.addDashboardObject("VCC", getVCC);
   config.addDashboardObject("VBat", getVBat);
+  config.addDashboardObject("VBatNow", getVBatNow);
   config.addDashboardObject("VBus", getVBus);
   config.addDashboardObject("VBatStat", getVBatStat);
+  config.addDashboardObject("ChargingStatus", getChargingStatus);
+  config.addDashboardObject("PowerStatus", getPowerStatus);
 
 
   Serial.println("###  Looping time\n");

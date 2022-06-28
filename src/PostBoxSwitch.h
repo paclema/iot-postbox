@@ -1,5 +1,6 @@
 #ifndef PostBoxSwitch_H
 #define PostBoxSwitch_H
+#pragma once
 #include <Arduino.h>
 #include <FunctionalInterrupt.h>
 
