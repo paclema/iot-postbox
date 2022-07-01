@@ -65,7 +65,7 @@ String getPowerStatus(){ return String((int)postbox.getPowerStatus());}
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial);  // Wait until the Serial is available
+  // while (!Serial);  // Wait until the Serial is available
   #ifdef ENABLE_SERIAL_DEBUG
     Serial.setDebugOutput(true);
   #endif
