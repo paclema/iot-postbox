@@ -96,6 +96,7 @@ enum class ChargingStatus {
     Unknown = 0,
     Charging = 1,
     NotCharging = 2,
+    Charged = 2,
 };
 
 
@@ -114,6 +115,7 @@ public:
 	//States
 	PowerStatus powerStatus = PowerStatus::Unknown;
 	ChargingStatus chargingStatus = ChargingStatus::Unknown;
+	ChargingStatus lastChargingStatus = ChargingStatus::Unknown;
 
 	float vBatReadings[ADC_SAMPLES];
 	int vBatReadIndex = 0;

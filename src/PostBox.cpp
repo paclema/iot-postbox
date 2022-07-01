@@ -101,7 +101,7 @@ void PostBox::loop(void) {
 
   #endif
 
-  
+
   // Check if there was an interrupt casued by one PostBoxSwitch
   if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
 
@@ -116,6 +116,24 @@ void PostBox::loop(void) {
   	ledStrip.show();
   	}
   }
+
+
+
+  if (chargingStatus == ChargingStatus::Charging) ledStrip.setPixelColor(ledStrip.Color(255,0,0),3);
+  else if (chargingStatus == ChargingStatus::Charged) ledStrip.setPixelColor(ledStrip.Color(0,255,0),3);
+  else if (chargingStatus == ChargingStatus::NotCharging) ledStrip.setPixelColor(ledStrip.Color(0,0,255),3);
+  else if (chargingStatus == ChargingStatus::Unknown) ledStrip.setPixelColor(ledStrip.Color(150,0,150),3);
+  else ledStrip.fill(ledStrip.Color(124,124,0), 3);
+  ledStrip.show();
+
+  if (powerStatus == PowerStatus::BatteryPowered) ledStrip.setPixelColor(ledStrip.Color(255,0,0),2);
+  else if (powerStatus == PowerStatus::USBPowered) ledStrip.setPixelColor(ledStrip.Color(0,255,0), 2);
+  else if (powerStatus == PowerStatus::BatteryAndUSBPowered) ledStrip.setPixelColor(ledStrip.Color(0,0,255), 2);
+  else if (powerStatus == PowerStatus::Unknown) ledStrip.setPixelColor(ledStrip.Color(150,0,150), 2);
+  else ledStrip.fill(ledStrip.Color(124,124,0),2);
+  ledStrip.show();
+
+
 
   // Update PostBoxSwitch states for next loop
   sw1.updateLastState();
@@ -237,6 +255,33 @@ void PostBox::updatePowerStatus(void){
   // PowerStatus sumePower = (PowerStatus)sume;
   // Serial.printf(" -- PowerStatus: %d Sume: %d sumePower: %d\n", vbus, sume, sumePower );
 
+
+  // Charging always happens if vbus > 3,75v for MCP73831/2
+  if (vBus >= 3750){
+    if (vBatStat == HIGH) {
+      chargingStatus = ChargingStatus::Charging;
+      lastChargingStatus = chargingStatus;
+      powerStatus = PowerStatus::BatteryAndUSBPowered;
+    }
+    else if (vBatStat == LOW) {
+      if (lastChargingStatus ==  ChargingStatus::Charging) {
+        chargingStatus = ChargingStatus::Charged;
+        lastChargingStatus = chargingStatus;
+        powerStatus = PowerStatus::BatteryAndUSBPowered;
+      } else if (lastChargingStatus ==  ChargingStatus::Charging)
+      
+       chargingStatus = ChargingStatus::NotCharging;
+
+
+    }
+    else chargingStatus = ChargingStatus::Unknown;
+
+
+  } else if (vBus <= 3000) {
+    if (vBat >= 2700){
+      powerStatus = PowerStatus::BatteryPowered;
+    } else if (vBat <= 100) powerStatus = PowerStatus::USBPowered;
+  }
 }
 
 
