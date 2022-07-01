@@ -39,7 +39,7 @@
 
 // WS2812B LED strip
 // -----------------
-#include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 
 #ifdef ARDUINO_IOTPOSTBOX_V1
   #define LED_PIN    PIN_NEOPIXEL 	//GPIO17
@@ -47,7 +47,7 @@
   #define LED_PIN    15 			//GPIO15
 #endif
 
-#define LED_COUNT  4
+#define NUM_LEDS  4
 #define BRIGHTNESS 10
 
 
@@ -96,14 +96,14 @@ enum class ChargingStatus {
     Unknown = 0,
     Charging = 1,
     NotCharging = 2,
-    Charged = 2,
+    Charged = 3,
 };
 
 
 
 class PostBox {
 public:
-	Adafruit_NeoPixel ledStrip;
+	CRGB leds[NUM_LEDS];
 
 	PostBoxSwitch sw1;
 	PostBoxSwitch sw2;

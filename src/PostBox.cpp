@@ -1,7 +1,6 @@
 #include "PostBox.h"
 
 PostBox::PostBox(void) : 
-	ledStrip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800), 
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
 	sw2(SW2_PIN, "Switch_2") {
@@ -35,7 +34,11 @@ void PostBox::setup(void) {
 
   setupDeepSleep();
 
-  ledStrip.begin();
+  // Setup WS2812B LED
+  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.setBrightness(BRIGHTNESS);
+  fill_solid( leds, NUM_LEDS, CRGB::White);
+  FastLED.show();
 
   //Check which button was pressed
   // int countSwitches = sizeof switches / sizeof *switches;
@@ -108,30 +111,31 @@ void PostBox::loop(void) {
   // Check the PostBoxSwitch sw2 to tur on/off the LED strip
   if (sw2.getState() != sw2.getLastState() ){  	
     if(sw2.getState() && !sw2.getLastState()){
-  	ledStrip.fill(ledStrip.Color(255,255,255), 0, LED_COUNT);
-  	ledStrip.setBrightness(BRIGHTNESS);
-  	ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::White);
+    FastLED.show();
   	} else if (!sw2.getState() && sw2.getLastState()){
-  	ledStrip.clear();
-  	ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();
   	}
   }
 
 
 
-  if (chargingStatus == ChargingStatus::Charging) ledStrip.setPixelColor(ledStrip.Color(255,0,0),3);
-  else if (chargingStatus == ChargingStatus::Charged) ledStrip.setPixelColor(ledStrip.Color(0,255,0),3);
-  else if (chargingStatus == ChargingStatus::NotCharging) ledStrip.setPixelColor(ledStrip.Color(0,0,255),3);
-  else if (chargingStatus == ChargingStatus::Unknown) ledStrip.setPixelColor(ledStrip.Color(150,0,150),3);
-  else ledStrip.fill(ledStrip.Color(124,124,0), 3);
-  ledStrip.show();
 
-  if (powerStatus == PowerStatus::BatteryPowered) ledStrip.setPixelColor(ledStrip.Color(255,0,0),2);
-  else if (powerStatus == PowerStatus::USBPowered) ledStrip.setPixelColor(ledStrip.Color(0,255,0), 2);
-  else if (powerStatus == PowerStatus::BatteryAndUSBPowered) ledStrip.setPixelColor(ledStrip.Color(0,0,255), 2);
-  else if (powerStatus == PowerStatus::Unknown) ledStrip.setPixelColor(ledStrip.Color(150,0,150), 2);
-  else ledStrip.fill(ledStrip.Color(124,124,0),2);
-  ledStrip.show();
+  if (chargingStatus == ChargingStatus::Charging) leds[3] = CRGB::Red;
+  else if (chargingStatus == ChargingStatus::Charged) leds[3] = CRGB::Green;
+  else if (chargingStatus == ChargingStatus::NotCharging) leds[3] = CRGB::Blue;
+  else if (chargingStatus == ChargingStatus::Unknown) leds[3] = CRGB::Yellow;
+  else leds[3] = CRGB::Orange;
+  FastLED.show();
+
+  if (powerStatus == PowerStatus::BatteryPowered) leds[2] = CRGB::Red;
+  else if (powerStatus == PowerStatus::USBPowered) leds[2] = CRGB::Green;
+  else if (powerStatus == PowerStatus::BatteryAndUSBPowered) leds[2] = CRGB::Blue;
+  else if (powerStatus == PowerStatus::Unknown) leds[2] = CRGB::Yellow;
+  else leds[2] = CRGB::Orange;
+  FastLED.show();
+
 
 
 
@@ -144,8 +148,8 @@ void PostBox::loop(void) {
 
 void PostBox::powerOff(void) {
 
-  ledStrip.clear();
-  ledStrip.show();
+  fill_solid( leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
   digitalWrite(LDO2_EN_PIN, LOW);
   Serial.println("CH_PD disabled");
   delay(10);
@@ -258,19 +262,19 @@ void PostBox::updatePowerStatus(void){
 
   // Charging always happens if vbus > 3,75v for MCP73831/2
   if (vBus >= 3750){
-    if (vBatStat == HIGH) {
+    if (vBatStat == LOW) {
       chargingStatus = ChargingStatus::Charging;
       lastChargingStatus = chargingStatus;
       powerStatus = PowerStatus::BatteryAndUSBPowered;
     }
-    else if (vBatStat == LOW) {
+    else if (vBatStat == HIGH) {
       if (lastChargingStatus ==  ChargingStatus::Charging) {
         chargingStatus = ChargingStatus::Charged;
         lastChargingStatus = chargingStatus;
         powerStatus = PowerStatus::BatteryAndUSBPowered;
-      } else if (lastChargingStatus ==  ChargingStatus::Charging)
-      
-       chargingStatus = ChargingStatus::NotCharging;
+      } else if (lastChargingStatus ==  ChargingStatus::Charging) {
+          chargingStatus = ChargingStatus::NotCharging;
+      }
 
 
     }
@@ -278,6 +282,8 @@ void PostBox::updatePowerStatus(void){
 
 
   } else if (vBus <= 3000) {
+    chargingStatus = ChargingStatus::NotCharging;
+    lastChargingStatus = chargingStatus;
     if (vBat >= 2700){
       powerStatus = PowerStatus::BatteryPowered;
     } else if (vBat <= 100) powerStatus = PowerStatus::USBPowered;
@@ -310,13 +316,12 @@ void PostBox::updateLedStrip(void) {
   // if(digitalRead(switches[1].pin)){
   bool lightMode = false;
   if(digitalRead(sw2.getPin()) == HIGH){
-    ledStrip.fill(ledStrip.Color(255,255,255), 0, LED_COUNT);
-    ledStrip.setBrightness(BRIGHTNESS);
-    ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::White);
+    FastLED.show();
     lightMode = true;
   } else {
-    ledStrip.clear();
-    ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();
     lightMode = false;
   }
 
@@ -376,8 +381,8 @@ void PostBox::setupDeepSleep(void) {
 }
 
 void PostBox::turnOffDevice(void) {
-  ledStrip.clear();
-  ledStrip.show();
+  fill_solid( leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
   digitalWrite(LDO2_EN_PIN, LOW);
   Serial.println("CH_PD disabled");
   delay(10);
