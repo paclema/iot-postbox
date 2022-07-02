@@ -123,7 +123,7 @@ public:
 
 	float vBat = 0;		// Values in mV
 	float vBus = 0;		// Values in mV
-	int vBatStat = 0;	// Charging = 1, Not charging = 0
+	int vBatStat = 0;	// Charging = 0, Not charging = 1
 	esp_adc_cal_characteristics_t *VBAT_adc_chars = new esp_adc_cal_characteristics_t;
 	esp_adc_cal_characteristics_t *VBUS_adc_chars = new esp_adc_cal_characteristics_t;
 
@@ -151,14 +151,13 @@ public:
 
 
 	void ISR_FLAG isrCharging(){
-		int pinState = digitalRead(VBAT_STAT_SENSE_PIN);
-		// Serial.printf(" ----  pinState: %d\n", pinState);
+		vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
 
-		if (pinState == HIGH) chargingStatus = ChargingStatus::NotCharging;
-		else if (pinState == LOW) chargingStatus = ChargingStatus::Charging;
-		else chargingStatus = ChargingStatus::Unknown;
+		// if (pinState == HIGH) chargingStatus = ChargingStatus::NotCharging;
+		// else if (pinState == LOW) chargingStatus = ChargingStatus::Charging;
+		// else chargingStatus = ChargingStatus::Unknown;
 
-		Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  pinState ? "true": "false", chargingStatus);
+		Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  vBatStat ? "true": "false", chargingStatus);
 	};
 	ChargingStatus getChargingStatus(void) { return chargingStatus;};
 	PowerStatus getPowerStatus(void) { return powerStatus;};

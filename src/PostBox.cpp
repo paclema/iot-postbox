@@ -72,10 +72,9 @@ void PostBox::init(void) {
   sw1.readCurrentState();
   sw2.readCurrentState();
 
-  isrCharging();
-
   //Check sense inputs
   initADC();
+  vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
   updatePowerStatus();
   readVoltage();
 
@@ -83,8 +82,11 @@ void PostBox::init(void) {
 
   publishWakeUp("wakeup");
 
+  Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  vBatStat ? "true": "false", chargingStatus);
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw1.getPin(), sw1.getState() ? "true": "false", sw1.getLastState() ? "true": "false", sw1.getCount());
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw2.getPin(), sw2.getState() ? "true": "false", sw2.getLastState() ? "true": "false", sw2.getCount());
+  Serial.printf(" -- vBus %1.3fmV vBat: %1.3fmV\n", vBus, vBat);
+
 }
 
 
@@ -199,6 +201,7 @@ void PostBox::initADC(void){
   }
 
   for (int i = 0; i < ADC_SAMPLES; i++) vBatReadings[i] = 0;
+  for (int i = 0; i < ADC_SAMPLES; i++) updatedADC();
 
 }
 
@@ -244,21 +247,6 @@ void PostBox::updatedADC(void){
 void PostBox::updatePowerStatus(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
   updatedADC();
-  vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
-
-  // Serial.printf(" -- vBus: %1.3fV VBAT_STAT_SENSE_PIN: %d vBat: %1.3fV\n", vBus/1000, vBatStat, vBat/1000);
-
-  // if (vBus >= 100){
-  //   if (vBatStat == HIGH) powerStatus = PowerStatus::BatteryAndUSBPowered;
-  //   else if( vBatStat == LOW) powerStatus = PowerStatus::USBPowered;
-  // } else if( vBatStat == HIGH) powerStatus = PowerStatus::BatteryPowered;
-  // else powerStatus = PowerStatus::Unknown;
-
-  // int sume = 0;
-  // sume = vBatStat + 2 *vbus;
-  // PowerStatus sumePower = (PowerStatus)sume;
-  // Serial.printf(" -- PowerStatus: %d Sume: %d sumePower: %d\n", vbus, sume, sumePower );
-
 
   // Charging always happens if vbus > 3,75v for MCP73831/2
   if (vBus >= 3750){
@@ -266,20 +254,16 @@ void PostBox::updatePowerStatus(void){
       chargingStatus = ChargingStatus::Charging;
       lastChargingStatus = chargingStatus;
       powerStatus = PowerStatus::BatteryAndUSBPowered;
-    }
-    else if (vBatStat == HIGH) {
+    } else if (vBatStat == HIGH) {
       if (lastChargingStatus ==  ChargingStatus::Charging) {
         chargingStatus = ChargingStatus::Charged;
         lastChargingStatus = chargingStatus;
         powerStatus = PowerStatus::BatteryAndUSBPowered;
-      } else if (lastChargingStatus ==  ChargingStatus::Charging) {
-          chargingStatus = ChargingStatus::NotCharging;
+      } else if (lastChargingStatus !=  ChargingStatus::Charging) {
+        chargingStatus = ChargingStatus::NotCharging;
+        powerStatus = PowerStatus::USBPowered;
       }
-
-
-    }
-    else chargingStatus = ChargingStatus::Unknown;
-
+    } else chargingStatus = ChargingStatus::Unknown;
 
   } else if (vBus <= 3000) {
     chargingStatus = ChargingStatus::NotCharging;
@@ -288,9 +272,8 @@ void PostBox::updatePowerStatus(void){
       powerStatus = PowerStatus::BatteryPowered;
     } else if (vBat <= 100) powerStatus = PowerStatus::USBPowered;
   }
+
 }
-
-
 
 
 float PostBox::readVoltage(void) {
