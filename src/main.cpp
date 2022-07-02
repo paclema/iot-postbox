@@ -50,21 +50,26 @@ void turnESPOff (void){
 }
 
 
-
 // Websocket functions to publish:
 String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);}
 String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
-String getVCC(){ return String((float)postbox.readVoltage());}
-
+String getVCC(){ return String((float)postbox.readVoltage(),3);}
+String getVBat(){ return String((float)postbox.getVBat()/1000,4);}
+String getVBatNow(){ return String((float)postbox.getVBatNow()/1000,3);}
+String getVBus(){ return String((float)postbox.getVBus()/1000,3);}
+String getVBatStat(){ return String(postbox.getVBatStat() ? "true" : "false");}
+String getChargingStatus(){ return String((int)postbox.getChargingStatus());}
+String getPowerStatus(){ return String((int)postbox.getPowerStatus());}
 
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial);  // Wait until the Serial is available
+  // while (!Serial);  // Wait until the Serial is available
   #ifdef ENABLE_SERIAL_DEBUG
     Serial.setDebugOutput(true);
   #endif
+
 
   postbox.setup();
   config.begin();
@@ -81,6 +86,12 @@ void setup() {
   config.addDashboardObject("loop", getLoopTime);
   config.addDashboardObject("RSSI", getRSSI);
   config.addDashboardObject("VCC", getVCC);
+  config.addDashboardObject("VBat", getVBat);
+  config.addDashboardObject("VBatNow", getVBatNow);
+  config.addDashboardObject("VBus", getVBus);
+  config.addDashboardObject("VBatStat", getVBatStat);
+  config.addDashboardObject("ChargingStatus", getChargingStatus);
+  config.addDashboardObject("PowerStatus", getPowerStatus);
 
 
   Serial.println("###  Looping time\n");
@@ -103,22 +114,6 @@ void loop() {
   //   networkRestart();
   //   config.configureServer(&server);
   // }
-
-  // // Check if there was an interrupt casued by one PostBoxSwitch
-  // if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
-
-  // // Check the PostBoxSwitch sw2 to tur on/off the LED strip
-  // if (sw2.getState() != sw2.getLastState() ){  	
-  //   if(sw2.getState() && !sw2.getLastState()){
-  // 	strip.fill(strip.Color(255,255,255), 0, LED_COUNT);
-  // 	strip.setBrightness(BRIGHTNESS);
-  // 	strip.show();
-  // 	} else if (!sw2.getState() && sw2.getLastState()){
-  // 	strip.clear();
-  // 	strip.show();
-  // 	}
-  // }
-
 
 
   // Main Loop:

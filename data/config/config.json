@@ -51,7 +51,7 @@
       "port": 81
     },
     "deep_sleep": {
-      "enabled": true,
+      "enabled": false,
       "mode": "WAKE_RF_DEFAULT",
       "mode_options": [
         "WAKE_RF_DEFAULT",
@@ -60,7 +60,7 @@
         "WAKE_NO_RFCAL"
       ],
       "sleep_time": 0,
-      "sleep_delay": 30
+      "sleep_delay": 180
     },
     "light_sleep": {
       "enabled": false,
@@ -71,7 +71,7 @@
       ]
     },
     "ntp": {
-      "enabled": true,
+      "enabled": false,
       "ntpServer": "pool.ntp.org",
       "gmt_offset_sec": 0,
       "daylight_offset_sec": 3600

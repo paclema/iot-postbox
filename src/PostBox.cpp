@@ -1,7 +1,6 @@
 #include "PostBox.h"
 
 PostBox::PostBox(void) : 
-	ledStrip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800), 
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
 	sw2(SW2_PIN, "Switch_2") {
@@ -19,6 +18,13 @@ void PostBox::setup(void) {
   #else
   pinMode(LDO2_EN_PIN, OUTPUT);
   digitalWrite(LDO2_EN_PIN, HIGH);
+
+  // Sense inputs
+  pinMode(VBUS_SENSE_PIN, INPUT);
+  pinMode(VBAT_SENSE_PIN, INPUT);
+  pinMode(VBAT_STAT_SENSE_PIN, INPUT);
+  attachInterrupt(VBAT_STAT_SENSE_PIN, std::bind(&PostBox::isrCharging,this), CHANGE);
+
   #endif
 
   #ifdef USE_TP4056
@@ -28,7 +34,11 @@ void PostBox::setup(void) {
 
   setupDeepSleep();
 
-  ledStrip.begin();
+  // Setup WS2812B LED
+  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.setBrightness(BRIGHTNESS);
+  fill_solid( leds, NUM_LEDS, CRGB::White);
+  FastLED.show();
 
   //Check which button was pressed
   // int countSwitches = sizeof switches / sizeof *switches;
@@ -55,20 +65,36 @@ void PostBox::setup(void) {
   updateLedStrip();
 }
 
+
 void PostBox::init(void) {
 
-  // Recheck switches state:
+  // Recheck switches state
   sw1.readCurrentState();
   sw2.readCurrentState();
 
+  //Check sense inputs
+  initADC();
+  vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
+  updatePowerStatus();
+  readVoltage();
+
+
+
   publishWakeUp("wakeup");
 
+  Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  vBatStat ? "true": "false", chargingStatus);
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw1.getPin(), sw1.getState() ? "true": "false", sw1.getLastState() ? "true": "false", sw1.getCount());
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw2.getPin(), sw2.getState() ? "true": "false", sw2.getLastState() ? "true": "false", sw2.getCount());
+  Serial.printf(" -- vBus %1.3fmV vBat: %1.3fmV\n", vBus, vBat);
+
 }
 
 
 void PostBox::loop(void) {
+
+  updatePowerStatus();
+  
+  // TODO: handle this in main  	
   #if defined(USE_TP4056) && defined(NO_SLEEP_WHILE_CHARGING)
     if ( (!wakeUpPublished ) || !digitalRead(CHRG_PIN) == true ) config.services.deep_sleep.enabled = false;    
     else config.services.deep_sleep.enabled = true;  
@@ -80,21 +106,35 @@ void PostBox::loop(void) {
 
   #endif
 
-  
+
   // Check if there was an interrupt casued by one PostBoxSwitch
   if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
 
   // Check the PostBoxSwitch sw2 to tur on/off the LED strip
-  if (sw2.getState() != sw2.getLastState() ){  	
-    if(sw2.getState() && !sw2.getLastState()){
-  	ledStrip.fill(ledStrip.Color(255,255,255), 0, LED_COUNT);
-  	ledStrip.setBrightness(BRIGHTNESS);
-  	ledStrip.show();
-  	} else if (!sw2.getState() && sw2.getLastState()){
-  	ledStrip.clear();
-  	ledStrip.show();
-  	}
+  if (sw2.getState() != sw2.getLastState()){
+    if(sw2.getState() && !sw2.getLastState()) fill_solid( leds, NUM_LEDS, CRGB::White);
+    else if (!sw2.getState() && sw2.getLastState()) fill_solid( leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();
   }
+
+
+  if (powerStatus != lastPowerStatus) {
+    lastPowerStatus = powerStatus;
+    if (chargingStatus == ChargingStatus::Charging) leds[3] = CRGB::Red;
+    else if (chargingStatus == ChargingStatus::Charged) leds[3] = CRGB::Green;
+    else if (chargingStatus == ChargingStatus::NotCharging) leds[3] = CRGB::Blue;
+    else if (chargingStatus == ChargingStatus::Unknown) leds[3] = CRGB::Yellow;
+    else leds[3] = CRGB::Orange;
+
+    if (powerStatus == PowerStatus::BatteryPowered) leds[2] = CRGB::Red;
+    else if (powerStatus == PowerStatus::USBPowered) leds[2] = CRGB::Green;
+    else if (powerStatus == PowerStatus::BatteryAndUSBPowered) leds[2] = CRGB::Blue;
+    else if (powerStatus == PowerStatus::Unknown) leds[2] = CRGB::Yellow;
+    else leds[2] = CRGB::Orange;
+    FastLED.show();
+  }
+  
+
 
   // Update PostBoxSwitch states for next loop
   sw1.updateLastState();
@@ -105,8 +145,8 @@ void PostBox::loop(void) {
 
 void PostBox::powerOff(void) {
 
-  ledStrip.clear();
-  ledStrip.show();
+  fill_solid( leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
   digitalWrite(LDO2_EN_PIN, LOW);
   Serial.println("CH_PD disabled");
   delay(10);
@@ -122,10 +162,118 @@ void PostBox::powerOff(void) {
 }
 
 
+void PostBox::initADC(void){
+  adc1_config_width(ADC_WIDTH_BIT_13);
+  
+  esp_err_t ret;
+  ret = esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP);
+  if (ret == ESP_ERR_NOT_SUPPORTED) {
+      Serial.printf( "Calibration scheme not supported, skip software calibration\n");
+  } else if (ret == ESP_ERR_INVALID_VERSION) {
+      Serial.printf( "eFuse not burnt, skip software calibration\n");
+  } else if (ret == ESP_OK) {
+      // Serial.printf( "eFuse burnt, software calibration can proceed\n");
+
+      /*
+      esp_adc_cal_characteristics_t adc_chars;
+      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_6, ADC_WIDTH_BIT_DEFAULT, ESP_ADC_CAL_VAL_DEFAULT_VREF, &adc_chars);
+      //Check type of calibration value used to characterize ADC
+      if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
+          Serial.printf("eFuse Vref\n");
+      } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+          Serial.printf("Two Point\n");
+      } else {
+          Serial.printf("Default\n");
+      }
+      */
+
+      adc1_config_channel_atten(VBUS_ADC_CHANNEL, VBUS_ADC_ATTEN);
+      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBUS_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBUS_adc_chars);
+
+      adc1_config_channel_atten(VBAT_ADC_CHANNEL, VBAT_ADC_ATTEN);
+      esp_adc_cal_value_t val_type2 = esp_adc_cal_characterize(ADC_UNIT_1,VBAT_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBAT_adc_chars);
+      
+  }
+
+  for (int i = 0; i < ADC_SAMPLES; i++) vBatReadings[i] = 0;
+  for (int i = 0; i < ADC_SAMPLES; i++) updatedADC();
+
+}
+
+
+void PostBox::updatedADC(void){
+  //TODO: BATTERY, USB POWER AND CHARGING SENSE
+
+  int vBat_raw = adc1_get_raw(VBAT_ADC_CHANNEL);
+  // uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBat_raw, VBAT_adc_chars);
+  // vBat = vBat_ADCVolts * VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  // Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBat_raw: %d\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000, vBat_raw);
+
+  bool printFlag = false;
+
+  vBatReadTotal = vBatReadTotal - vBatReadings[vBatReadIndex];
+  vBatReadings[vBatReadIndex] = vBat_raw;
+  vBatReadTotal = vBatReadTotal + vBatReadings[vBatReadIndex];
+  vBatReadIndex = vBatReadIndex + 1;
+  if (vBatReadIndex >= ADC_SAMPLES) {
+
+    vBatReadIndex = 0;
+    printFlag = true;
+
+  } else printFlag = false;
+
+  // vBat = vBatReadTotal / ADC_SAMPLES;
+  uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBatReadTotal / ADC_SAMPLES, VBAT_adc_chars);
+  vBat = vBat_ADCVolts * (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  float t = (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
+  // if (printFlag) Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV --> %1.2fV- vBat_raw: %d VBAT_VOLTAGE_DIVIDER_COEFICIENT: %1.4f\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000,vBat/1000, vBat_raw, t);
+
+
+  int vBus_raw = adc1_get_raw(VBUS_ADC_CHANNEL);
+  uint32_t vBus_ADCVolts = esp_adc_cal_raw_to_voltage(vBus_raw, VBUS_adc_chars);
+  vBus = vBus_ADCVolts * VBUS_VOLTAGE_DIVIDER_COEFICIENT;
+  // Serial.printf("VBUS sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBus_raw: %d\n", vBus_ADCVolts, (float)vBus_ADCVolts/1000, vBus/1000, vBus_raw);
+
+
+
+}
+
+
+void PostBox::updatePowerStatus(void){
+  //TODO: BATTERY, USB POWER AND CHARGING SENSE
+  updatedADC();
+
+  // Charging always happens if vbus > 3,75v for MCP73831/2
+  if (vBus >= 3750){
+    if (vBatStat == LOW) {
+      chargingStatus = ChargingStatus::Charging;
+      lastChargingStatus = chargingStatus;
+      powerStatus = PowerStatus::BatteryAndUSBPowered;
+    } else if (vBatStat == HIGH) {
+      if (lastChargingStatus ==  ChargingStatus::Charging) {
+        chargingStatus = ChargingStatus::Charged;
+        lastChargingStatus = chargingStatus;
+        powerStatus = PowerStatus::BatteryAndUSBPowered;
+      } else if (lastChargingStatus !=  ChargingStatus::Charging) {
+        chargingStatus = ChargingStatus::NotCharging;
+        powerStatus = PowerStatus::USBPowered;
+      }
+    } else chargingStatus = ChargingStatus::Unknown;
+
+  } else if (vBus <= 3000) {
+    chargingStatus = ChargingStatus::NotCharging;
+    lastChargingStatus = chargingStatus;
+    if (vBat >= 2700){
+      powerStatus = PowerStatus::BatteryPowered;
+    } else if (vBat <= 100) powerStatus = PowerStatus::USBPowered;
+  }
+
+}
+
+
 float PostBox::readVoltage(void) {
 	#ifdef ARDUINO_IOTPOSTBOX_V1
-	//TODO: BATTERY, USB POWER AND CHARGING SENSE
-	return -1;
+	  return vBat/1000;
 	#else
 	#ifdef USE_TP4056
 		int sensorValue = analogRead(A0);
@@ -133,7 +281,7 @@ float PostBox::readVoltage(void) {
 		Serial.printf("The internal VCC reads %1.3f volts. CHRG: %d - STDBY: %d\n", volts , !digitalRead(CHRG_PIN), !digitalRead(STDBY_PIN));
 	#else
 		float volts = ESP.getVcc();
-		Serial.printf("The internal VCC reads %1.3f volts\n", volts / 1000);
+		Serial.printf("The internal VCC reads %1.1f volts\n", volts / 1000);
 		return volts;
 	#endif
 	#endif
@@ -146,13 +294,12 @@ void PostBox::updateLedStrip(void) {
   // if(digitalRead(switches[1].pin)){
   bool lightMode = false;
   if(digitalRead(sw2.getPin()) == HIGH){
-    ledStrip.fill(ledStrip.Color(255,255,255), 0, LED_COUNT);
-    ledStrip.setBrightness(BRIGHTNESS);
-    ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::White);
+    FastLED.show();
     lightMode = true;
   } else {
-    ledStrip.clear();
-    ledStrip.show();
+    fill_solid( leds, NUM_LEDS, CRGB::Black);
+    FastLED.show();
     lightMode = false;
   }
 
@@ -212,8 +359,8 @@ void PostBox::setupDeepSleep(void) {
 }
 
 void PostBox::turnOffDevice(void) {
-  ledStrip.clear();
-  ledStrip.show();
+  fill_solid( leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
   digitalWrite(LDO2_EN_PIN, LOW);
   Serial.println("CH_PD disabled");
   delay(10);
