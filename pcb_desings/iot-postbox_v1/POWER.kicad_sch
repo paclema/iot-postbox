@@ -1578,8 +1578,8 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 2185416d-9a6f-4371-b104-726daae78763)
   )
-  (text "For MCP73831/2 max 500mA \nand TP4054 max 800mA\nIcharge(ma) = 1000/R(kOhm)\n10k = 100mA\n5k = 200mA\n2k2 = 455mA\n2k = 500mA\n1k = 1000mA\n\nFor TP4065 max 600mA\nIcharge(ma) = 1100/R(kOhm)\n2k2 = 500mA\n2k = 600mA"
-    (at 80.01 65.405 0)
+  (text "For MCP73831/2 max 500mA \nand TP4054 max 800mA\nIcharge(ma) = 1000(V)/R(kOhm)\n10k = 100mA\n5k = 200mA\n2k2 = 455mA\n2k = 500mA\n1k = 1000mA\n\nFor TP4065 max 600mA\nIcharge(ma) = 1100/R(kOhm)\n2k2 = 500mA\n2k = 600mA"
+    (at 77.47 63.5 0)
     (effects (font (size 1 1)) (justify left bottom))
     (uuid 4f17b07c-e22a-4ee3-85ad-d4fd13c75170)
   )
@@ -1591,12 +1591,17 @@
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid 87bc0137-cfa3-4855-aeb1-c59dcdeaf0e7)
   )
+  (text "Depending the IC, the VBAT_STAT output can be:\n- Tri-state output: MCP73831\n- Open-drain output: MCP73832, TP4054 or TP4065\nOnly for Open-drain, R18 make sense because \nVDD_STAT can be configurable only in that case"
+    (at 139.7 74.295 0)
+    (effects (font (size 1 1)) (justify left bottom))
+    (uuid a220b428-ef52-43fe-9eea-ec1520db71d4)
+  )
   (text "LIPO CHARGER" (at 114.3 29.21 0)
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid b2600525-e464-422b-9097-10d89431f155)
   )
   (text "MCP73831. Assuming VBUS 6V:\nVBAT_STAT = VBUS -> VBAT_STAT_SENSE= 3.3V --> Not Charging\nVBAT_STAT = GND  -> VBAT_STAT_SENSE= 0V   --> Charging\nVBAT_STAT = HI-Z -> VBAT_STAT_SENSE= 2.48V"
-    (at 207.01 41.91 0)
+    (at 201.93 40.64 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid bfa3948b-31c9-459f-b7ea-8ef5841555c8)
   )
