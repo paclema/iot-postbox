@@ -54,10 +54,10 @@ void turnESPOff (void){
 String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);}
 String getRSSI(){ return String(WiFi.RSSI());}
 String getHeapFree(){ return String((float)GET_FREE_HEAP/1000);}
-String getVCC(){ return String((float)postbox.readVoltage());}
-String getVBat(){ return String((float)postbox.getVBat()/1000);}
-String getVBatNow(){ return String((float)postbox.getVBatNow()/1000);}
-String getVBus(){ return String((float)postbox.getVBus()/1000);}
+String getVCC(){ return String((float)postbox.readVoltage(),3);}
+String getVBat(){ return String((float)postbox.getVBat()/1000,4);}
+String getVBatNow(){ return String((float)postbox.getVBatNow()/1000,3);}
+String getVBus(){ return String((float)postbox.getVBus()/1000,3);}
 String getVBatStat(){ return String(postbox.getVBatStat() ? "true" : "false");}
 String getChargingStatus(){ return String((int)postbox.getChargingStatus());}
 String getPowerStatus(){ return String((int)postbox.getPowerStatus());}
