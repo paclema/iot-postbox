@@ -114,6 +114,7 @@ public:
 
 	//States
 	PowerStatus powerStatus = PowerStatus::Unknown;
+	PowerStatus lastPowerStatus = PowerStatus::Unknown;
 	ChargingStatus chargingStatus = ChargingStatus::Unknown;
 	ChargingStatus lastChargingStatus = ChargingStatus::Unknown;
 

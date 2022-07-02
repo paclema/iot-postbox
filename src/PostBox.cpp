@@ -111,34 +111,29 @@ void PostBox::loop(void) {
   if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
 
   // Check the PostBoxSwitch sw2 to tur on/off the LED strip
-  if (sw2.getState() != sw2.getLastState() ){  	
-    if(sw2.getState() && !sw2.getLastState()){
-    fill_solid( leds, NUM_LEDS, CRGB::White);
+  if (sw2.getState() != sw2.getLastState()){
+    if(sw2.getState() && !sw2.getLastState()) fill_solid( leds, NUM_LEDS, CRGB::White);
+    else if (!sw2.getState() && sw2.getLastState()) fill_solid( leds, NUM_LEDS, CRGB::Black);
     FastLED.show();
-  	} else if (!sw2.getState() && sw2.getLastState()){
-    fill_solid( leds, NUM_LEDS, CRGB::Black);
-    FastLED.show();
-  	}
   }
 
 
+  if (powerStatus != lastPowerStatus) {
+    lastPowerStatus = powerStatus;
+    if (chargingStatus == ChargingStatus::Charging) leds[3] = CRGB::Red;
+    else if (chargingStatus == ChargingStatus::Charged) leds[3] = CRGB::Green;
+    else if (chargingStatus == ChargingStatus::NotCharging) leds[3] = CRGB::Blue;
+    else if (chargingStatus == ChargingStatus::Unknown) leds[3] = CRGB::Yellow;
+    else leds[3] = CRGB::Orange;
 
-
-  if (chargingStatus == ChargingStatus::Charging) leds[3] = CRGB::Red;
-  else if (chargingStatus == ChargingStatus::Charged) leds[3] = CRGB::Green;
-  else if (chargingStatus == ChargingStatus::NotCharging) leds[3] = CRGB::Blue;
-  else if (chargingStatus == ChargingStatus::Unknown) leds[3] = CRGB::Yellow;
-  else leds[3] = CRGB::Orange;
-  FastLED.show();
-
-  if (powerStatus == PowerStatus::BatteryPowered) leds[2] = CRGB::Red;
-  else if (powerStatus == PowerStatus::USBPowered) leds[2] = CRGB::Green;
-  else if (powerStatus == PowerStatus::BatteryAndUSBPowered) leds[2] = CRGB::Blue;
-  else if (powerStatus == PowerStatus::Unknown) leds[2] = CRGB::Yellow;
-  else leds[2] = CRGB::Orange;
-  FastLED.show();
-
-
+    if (powerStatus == PowerStatus::BatteryPowered) leds[2] = CRGB::Red;
+    else if (powerStatus == PowerStatus::USBPowered) leds[2] = CRGB::Green;
+    else if (powerStatus == PowerStatus::BatteryAndUSBPowered) leds[2] = CRGB::Blue;
+    else if (powerStatus == PowerStatus::Unknown) leds[2] = CRGB::Yellow;
+    else leds[2] = CRGB::Orange;
+    FastLED.show();
+  }
+  
 
 
   // Update PostBoxSwitch states for next loop
