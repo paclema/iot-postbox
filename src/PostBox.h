@@ -63,7 +63,7 @@
 
 // PostBox sleep configs
 // ---------------------
-#define BUTTON_PIN_BITMASK 0x10 // GPIO4 --> 2^4 in hex
+#define WAKE_UP_BITMASK ( GPIO_SEL_4 | GPIO_SEL_5 )
 RTC_DATA_ATTR static int bootCount = 0;
 
 
@@ -160,8 +160,10 @@ public:
 
 		Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  vBatStat ? "true": "false", chargingStatus);
 	};
+
 	ChargingStatus getChargingStatus(void) { return chargingStatus;};
 	PowerStatus getPowerStatus(void) { return powerStatus;};
+	bool isWakeUpPublished(void) { return wakeUpPublished;};
 
 
 
@@ -181,7 +183,7 @@ public:
 private:
 
 	bool wakeUpPublished = false;
-	int button = -1;              // Variable to store the button which triggered the bootup
+	int wakeUpGPIO = -1;              // Variable to store the GPIO which triggered the wake from Deep Sleep
 
 
 };

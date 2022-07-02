@@ -1,7 +1,7 @@
 {
   "network": {
-    "AP_SSID": "iotdevice",
-    "AP_password": "iotdevice",
+    "AP_SSID": "iotpostbox_v1",
+    "AP_password": "iotpostboxpwd",
     "AP_channel": 6,
     "AP_SSID_hidden": false,
     "AP_max_connection": 4,
@@ -11,7 +11,7 @@
     "ip_address": "192.168.1.2",
     "subnet": "255.255.255.0",
     "dns_Server": "192.168.1.1",
-    "hostname": "iotdevice",
+    "hostname": "iotpostbox_v1",
     "enable_NAT": false
   },
   "mqtt": {
@@ -19,7 +19,7 @@
     "reconnect_mqtt": false,
     "server": "broker.ddns.net",
     "port": 1883,
-    "id_name": "iot-button",
+    "id_name": "iot-postbox_v1",
     "enable_user_and_pass": true,
     "user_name": "user_name",
     "user_password": "user_password",

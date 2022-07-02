@@ -49,6 +49,7 @@ void turnESPOff (void){
 
 }
 
+bool configuredSleep = false;
 
 // Websocket functions to publish:
 String getLoopTime(){ return String(currentLoopMillis - previousMainLoopMillis);}
@@ -61,6 +62,7 @@ String getVBus(){ return String((float)postbox.getVBus()/1000,3);}
 String getVBatStat(){ return String(postbox.getVBatStat() ? "true" : "false");}
 String getChargingStatus(){ return String((int)postbox.getChargingStatus());}
 String getPowerStatus(){ return String((int)postbox.getPowerStatus());}
+String getConfiguredSleep(){ return String(configuredSleep ? "true" : "false");}
 
 
 void setup() {
@@ -92,10 +94,10 @@ void setup() {
   config.addDashboardObject("VBatStat", getVBatStat);
   config.addDashboardObject("ChargingStatus", getChargingStatus);
   config.addDashboardObject("PowerStatus", getPowerStatus);
+  config.addDashboardObject("configuredSleep", getConfiguredSleep);
 
 
   Serial.println("###  Looping time\n");
-
 
 }
 
@@ -114,6 +116,29 @@ void loop() {
   //   networkRestart();
   //   config.configureServer(&server);
   // }
+
+
+
+  // TODO: clean defined process
+  // #if defined(USE_TP4056) && defined(NO_SLEEP_WHILE_CHARGING)
+    PowerStatus powerNow = postbox.getPowerStatus();
+    if ( !postbox.isWakeUpPublished() || powerNow == PowerStatus::USBPowered || powerNow == PowerStatus::BatteryAndUSBPowered ){
+      config.services.deep_sleep.enabled = false;
+      // Serial.println("Deep sleep   ---> OFF");
+      configuredSleep = false;
+      } 
+    else {
+      config.services.deep_sleep.enabled = true;
+      // Serial.println("Deep sleep   ---> ON");
+      configuredSleep = true;
+    }
+    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
+  // #else
+    // if ( !wakeUpPublished ) config.services.deep_sleep.enabled = false;    
+    // else config.services.deep_sleep.enabled = true; 
+    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
+
+  // #endif
 
 
   // Main Loop:

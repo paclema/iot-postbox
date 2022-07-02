@@ -45,22 +45,22 @@ void PostBox::setup(void) {
   // for(int i=0; i< countSwitches; i++) {
   //   pinMode(switches[i].pin, INPUT);
   //   if(digitalRead(switches[i].pin) == HIGH) {
-  //     button = switches[i].pin;
+  //     wakeUpGPIO = switches[i].pin;
   //     switches[i].count++;
   //     break;
   //   }
   // }
-  // Serial.printf("\n -- Pin booter button: %d\n", button);
+  // Serial.printf("\n -- Pin booter wakeUpGPIO: %d\n", wakeUpGPIO);
   
 
 
   // long bootDelay = millis() - connectionTime;
   // long bootDelay = millis();
-  // Serial.printf("\tbootDelay: %ld - pin booter: %d\n", bootDelay, button);
+  // Serial.printf("\tbootDelay: %ld - pin booter: %d\n", bootDelay, wakeUpGPIO);
 
   // Disconnect wifi if the reboot was not originated by GPIOs
   // but probably caused by updating firmware by UART
-  // if (button == -1) WiFi.disconnect();
+  // if (wakeUpGPIO == -1) WiFi.disconnect();
 
   updateLedStrip();
 }
@@ -94,19 +94,6 @@ void PostBox::loop(void) {
 
   updatePowerStatus();
   
-  // TODO: handle this in main  	
-  #if defined(USE_TP4056) && defined(NO_SLEEP_WHILE_CHARGING)
-    if ( (!wakeUpPublished ) || !digitalRead(CHRG_PIN) == true ) config.services.deep_sleep.enabled = false;    
-    else config.services.deep_sleep.enabled = true;  
-    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
-  #else
-    // if ( !wakeUpPublished ) config.services.deep_sleep.enabled = false;    
-    // else config.services.deep_sleep.enabled = true; 
-    // TODO: save that deep sleep enabled within the config file instead hardcoding the variable
-
-  #endif
-
-
   // Check if there was an interrupt casued by one PostBoxSwitch
   if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
 
@@ -134,7 +121,6 @@ void PostBox::loop(void) {
     FastLED.show();
   }
   
-
 
   // Update PostBoxSwitch states for next loop
   sw1.updateLastState();
@@ -313,8 +299,9 @@ void PostBox::printWakeupReason(void) {
   {
     case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
     case ESP_SLEEP_WAKEUP_EXT1 : {
-      uint64_t GPIO_reason = esp_sleep_get_wakeup_cause();
+      uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
       int gpioWake = log(GPIO_reason)/log(2);
+      wakeUpGPIO = gpioWake;
       Serial.printf("Wakeup caused by external signal using RTC_CNTL. GPIO: %d\n", gpioWake);
       break;
       }
@@ -355,7 +342,7 @@ void PostBox::setupDeepSleep(void) {
   // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); // ESP32 wakes up every 5 seconds
   // esp_sleep_enable_ext0_wakeup(GPIO_NUM_4,1); //1 = High, 0 = Low
   // esp_sleep_enable_ext0_wakeup(GPIO_NUM_4,1); //1 = High, 0 = Low
-  esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup(WAKE_UP_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
 }
 
 void PostBox::turnOffDevice(void) {
@@ -380,7 +367,7 @@ void PostBox::publishWakeUp(String topic_end) {
   String topic = MQTTBaseTopic + topic_end;
   
   String msg_pub ="{\"wake_up_pin\": ";
-  msg_pub += String(button);
+  msg_pub += String(wakeUpGPIO);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage());
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 

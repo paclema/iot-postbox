@@ -51,7 +51,7 @@
       "port": 81
     },
     "deep_sleep": {
-      "enabled": false,
+      "enabled": true,
       "mode": "WAKE_RF_DEFAULT",
       "mode_options": [
         "WAKE_RF_DEFAULT",
