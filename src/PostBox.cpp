@@ -368,6 +368,7 @@ void PostBox::publishWakeUp(String topic_end) {
   
   String msg_pub ="{\"wake_up_pin\": ";
   msg_pub += String(wakeUpGPIO);
+  msg_pub = msg_pub + " ,\"boot_counter\": " + String(bootCount);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage(), 3);
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 
