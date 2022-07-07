@@ -1573,7 +1573,7 @@
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid 12062183-3043-4a27-a523-5922f7d2a270)
   )
-  (text "Usually handle this sense \nas digital input.\n\nIf adc is used, for ESP32-S2 \nchoose 11dB attenuation which \ngive a linear range up to 2.600mV\nequivalent as VBAT_STAT of 4.727V.\n\nFor 3v3 max ADC, VBUS must\nbe 6V max "
+  (text "Usually handle VBAT_STAT_SENSE \nas digital input.\n\nIf ADC is used, for ESP32-S2 \nchoose 11dB attenuation which \ngive a linear range up to 2.600mV\nequivalent as VBAT_STAT of 4.727V.\n\nFor 3v3 max ADC, VBUS must\nbe 6V max "
     (at 243.84 69.215 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 2185416d-9a6f-4371-b104-726daae78763)
@@ -1599,6 +1599,11 @@
   (text "LIPO CHARGER" (at 114.3 29.21 0)
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid b2600525-e464-422b-9097-10d89431f155)
+  )
+  (text "Protecctions:\n- Battery and input reverse polarity\nWARNING:\n- No temp protection\n- No Overcurrent protection"
+    (at 151.13 34.29 0)
+    (effects (font (size 1 1)) (justify left bottom))
+    (uuid b26e38dc-3c4b-47b2-85ff-e40169162b97)
   )
   (text "MCP73831. Assuming VBUS 6V:\nVBAT_STAT = VBUS -> VBAT_STAT_SENSE= 3.3V --> Not Charging\nVBAT_STAT = GND  -> VBAT_STAT_SENSE= 0V   --> Charging\nVBAT_STAT = HI-Z -> VBAT_STAT_SENSE= 2.48V"
     (at 201.93 40.64 0)

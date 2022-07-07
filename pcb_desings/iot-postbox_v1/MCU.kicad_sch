@@ -1645,7 +1645,7 @@
     (effects (font (size 2.54 2.54)) (justify left bottom))
     (uuid 192d76cf-8169-431d-806a-b441eb78cf05)
   )
-  (text "Add a 499 series resistor to GPIO43\nto supress U0TXD 80MHz harmonics.\nOnly if used as UART?"
+  (text "Add a 499Ohm series resistor to GPIO43\nto supress U0TXD 80MHz harmonics.\nOnly if used as UART?"
     (at 199.39 48.26 0)
     (effects (font (size 1 1)) (justify left bottom))
     (uuid 39b8bc88-a580-4bfd-86b0-2d16fea23873)
