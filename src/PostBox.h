@@ -29,7 +29,7 @@
 #define VBAT_R7		160		// R7 = 160KOhm
 #define VBAT_VOLTAGE_DIVIDER_COEFICIENT 	(VBAT_R6 + VBAT_R7) / VBAT_R7
 
-#define ADC_SAMPLES 10
+#define ADC_SAMPLES 30
 
 #endif
 
