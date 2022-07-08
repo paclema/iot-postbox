@@ -370,8 +370,8 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub += String(wakeUpGPIO);
   msg_pub = msg_pub + " ,\"boot_counter\": " + String(bootCount);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage(), 3);
-  msg_pub = msg_pub + " ,\"vBat\": " + String(vBat, 3);
-  msg_pub = msg_pub + " ,\"vBus\": " + String(vBus, 3);
+  msg_pub = msg_pub + " ,\"vBat\": " + String((float)vBat/1000, 3);
+  msg_pub = msg_pub + " ,\"vBus\": " + String((float)vBus/1000, 3);
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 
   // int countSwitches = sizeof switches / sizeof *switches;
@@ -394,6 +394,9 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub = msg_pub + " ,\"stdby\": " + !digitalRead(STDBY_PIN);
   #endif
   msg_pub +=" }";
-  
+
+  Serial.println(msg_pub);
+
+  mqtt->setBufferSize((uint16_t)(msg_pub.length() + 100));
   wakeUpPublished = mqtt->publish(topic.c_str(), msg_pub.c_str());
 }
