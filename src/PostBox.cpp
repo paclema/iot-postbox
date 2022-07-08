@@ -370,6 +370,8 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub += String(wakeUpGPIO);
   msg_pub = msg_pub + " ,\"boot_counter\": " + String(bootCount);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage(), 3);
+  msg_pub = msg_pub + " ,\"vBat\": " + String(vBat, 3);
+  msg_pub = msg_pub + " ,\"vBus\": " + String(vBus, 3);
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 
   // int countSwitches = sizeof switches / sizeof *switches;
