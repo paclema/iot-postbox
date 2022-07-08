@@ -383,6 +383,9 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub = msg_pub + " ,\"GPIO_" + sw2.getPin() + "_counter\": " + String(sw2.getCount());
   msg_pub = msg_pub + " ,\"GPIO_" + sw2.getPin() + "_state\": " + (sw2.getState() ? "true" : "false");
 
+  msg_pub = msg_pub + " ,\"PowerStatus\": " + String((int)powerStatus);
+  msg_pub = msg_pub + " ,\"ChargingStatus\": " + String((int)chargingStatus);
+
 
   #ifdef USE_TP4056
   msg_pub = msg_pub + " ,\"chrg\": " + !digitalRead(CHRG_PIN);
