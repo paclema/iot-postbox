@@ -229,8 +229,8 @@ void PostBox::updatePowerStatus(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
   updatedADC();
 
-  // Charging always happens if vbus > 3,75v for MCP73831/2
-  if (vBus >= 3750){
+  // Charging always happens if vbus > 3,75v for MCP73831/2, 4v for TP4056
+  if (vBus >= 4000){
     if (vBatStat == LOW) {
       chargingStatus = ChargingStatus::Charging;
       lastChargingStatus = chargingStatus;
@@ -246,7 +246,7 @@ void PostBox::updatePowerStatus(void){
       }
     } else chargingStatus = ChargingStatus::Unknown;
 
-  } else if (vBus <= 3000) {
+  } else if (vBus <= 3999) {
     chargingStatus = ChargingStatus::NotCharging;
     lastChargingStatus = chargingStatus;
     if (vBat >= 2700){
