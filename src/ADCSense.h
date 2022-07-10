@@ -38,15 +38,9 @@ public:
 	esp_adc_cal_characteristics_t *adc_chars = new esp_adc_cal_characteristics_t;
 
 	
-	ADCSense(uint8_t reqpin, adc1_channel_t channel, float coeff, String initName) : 
-		ADCpin(reqpin), ADCchannel(channel), voltageDividerCoeff(coeff), name(initName){
-		pinMode(ADCpin, INPUT);
-	};
-	
-	~ADCSense() {}
+	ADCSense(uint8_t reqpin, adc1_channel_t channel, float coeff, String initName);
+	~ADCSense(void);
 
-
-	
 	void init(adc_atten_t atten);
 	void updatedADC(void);
 

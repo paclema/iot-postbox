@@ -1,5 +1,19 @@
 #include "ADCSense.h"
 
+ADCSense::ADCSense(uint8_t reqpin, adc1_channel_t channel, float coeff, String initName) : 
+	ADCpin(reqpin),
+	ADCchannel(channel),
+	voltageDividerCoeff(coeff),
+	name(initName)
+{
+	pinMode(ADCpin, INPUT);
+
+
+}
+
+ADCSense::~ADCSense(void) {
+}
+
 void ADCSense::init(adc_atten_t atten){
 	adc1_config_width(ADC_WIDTH_BIT_13);
 

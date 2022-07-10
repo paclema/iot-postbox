@@ -118,11 +118,11 @@ public:
 	ChargingStatus lastChargingStatus = ChargingStatus::Unknown;
 
 	ADCSense vBatSense;
+	ADCSense vBusSense;
 
 	float vBat = 0;		// Values in mV
 	float vBus = 0;		// Values in mV
 	int vBatStat = 0;	// Charging = 0, Not charging = 1
-	esp_adc_cal_characteristics_t *VBUS_adc_chars = new esp_adc_cal_characteristics_t;
 
 
 
@@ -134,7 +134,6 @@ public:
 	void loop(void);
 	void powerOff(void);
 
-	void initADC(void);
 	void updatedADC(void);
 	void updatePowerStatus(void);
 	float readVoltage(void);

@@ -4,6 +4,7 @@ PostBox::PostBox(void) :
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
 	sw2(SW2_PIN, "Switch_2"),
+  vBusSense(VBUS_SENSE_PIN, VBUS_ADC_CHANNEL, (float)VBUS_VOLTAGE_DIVIDER_COEFICIENT, "VBUS"),
   vBatSense(VBAT_SENSE_PIN, VBAT_ADC_CHANNEL, (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT, "VBAT")
   {
 
@@ -23,7 +24,8 @@ void PostBox::setup(void) {
   digitalWrite(LDO2_EN_PIN, HIGH);
 
   // Sense inputs
-  pinMode(VBUS_SENSE_PIN, INPUT);
+  vBusSense.init(VBUS_ADC_ATTEN);
+  vBatSense.init(VBAT_ADC_ATTEN);
   pinMode(VBAT_STAT_SENSE_PIN, INPUT);
   attachInterrupt(VBAT_STAT_SENSE_PIN, std::bind(&PostBox::isrCharging,this), CHANGE);
 
@@ -75,7 +77,6 @@ void PostBox::init(void) {
   sw2.readCurrentState();
 
   //Check sense inputs
-  initADC();
   vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
   updatePowerStatus();
   readVoltage();
@@ -150,53 +151,11 @@ void PostBox::powerOff(void) {
 }
 
 
-void PostBox::initADC(void){
-  adc1_config_width(ADC_WIDTH_BIT_13);
-  
-  esp_err_t ret;
-  ret = esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP);
-  if (ret == ESP_ERR_NOT_SUPPORTED) {
-      Serial.printf( "Calibration scheme not supported, skip software calibration\n");
-  } else if (ret == ESP_ERR_INVALID_VERSION) {
-      Serial.printf( "eFuse not burnt, skip software calibration\n");
-  } else if (ret == ESP_OK) {
-      // Serial.printf( "eFuse burnt, software calibration can proceed\n");
-
-      /*
-      esp_adc_cal_characteristics_t adc_chars;
-      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_6, ADC_WIDTH_BIT_DEFAULT, ESP_ADC_CAL_VAL_DEFAULT_VREF, &adc_chars);
-      //Check type of calibration value used to characterize ADC
-      if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
-          Serial.printf("eFuse Vref\n");
-      } else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
-          Serial.printf("Two Point\n");
-      } else {
-          Serial.printf("Default\n");
-      }
-      */
-
-      adc1_config_channel_atten(VBUS_ADC_CHANNEL, VBUS_ADC_ATTEN);
-      esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBUS_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBUS_adc_chars);
-
-  }
-
-  vBatSense.init(VBAT_ADC_ATTEN);
-
-}
-
-
 void PostBox::updatedADC(void){
-
+  vBusSense.updatedADC();
   vBatSense.updatedADC();
+  vBus = vBusSense.mV;
   vBat = vBatSense.mV;
-
-  int vBus_raw = adc1_get_raw(VBUS_ADC_CHANNEL);
-  uint32_t vBus_ADCVolts = esp_adc_cal_raw_to_voltage(vBus_raw, VBUS_adc_chars);
-  vBus = vBus_ADCVolts * VBUS_VOLTAGE_DIVIDER_COEFICIENT;
-  // Serial.printf("VBUS sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBus_raw: %d\n", vBus_ADCVolts, (float)vBus_ADCVolts/1000, vBus/1000, vBus_raw);
-
-
-
 }
 
 
@@ -204,7 +163,7 @@ void PostBox::updatePowerStatus(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
   updatedADC();
 
-  // Charging always happens if vbus > 3,75v for MCP73831/2, 4v for TP4056
+  // Charging always happens if vBus > 3,75v for MCP73831/2, 4v for TP4056
   if (vBus >= 4000){
     if (vBatStat == LOW) {
       chargingStatus = ChargingStatus::Charging;
