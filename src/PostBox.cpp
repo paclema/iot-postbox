@@ -24,8 +24,8 @@ void PostBox::setup(void) {
   digitalWrite(LDO2_EN_PIN, HIGH);
 
   // Sense inputs
-  vBusSense.init(VBUS_ADC_ATTEN);
-  vBatSense.init(VBAT_ADC_ATTEN);
+  vBusSense.setup(VBUS_ADC_ATTEN);
+  vBatSense.setup(VBAT_ADC_ATTEN);
   pinMode(VBAT_STAT_SENSE_PIN, INPUT);
   attachInterrupt(VBAT_STAT_SENSE_PIN, std::bind(&PostBox::isrCharging,this), CHANGE);
 
@@ -77,6 +77,8 @@ void PostBox::init(void) {
   sw2.readCurrentState();
 
   //Check sense inputs
+  vBusSense.updatedADC();
+  vBatSense.updatedADC();
   vBatStat = digitalRead(VBAT_STAT_SENSE_PIN);
   updatePowerStatus();
   readVoltage();
@@ -88,13 +90,15 @@ void PostBox::init(void) {
   Serial.printf(" -- VBAT_STAT_SENSE_PIN: %s --> ChargingStatus: %d\n",  vBatStat ? "true": "false", chargingStatus);
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw1.getPin(), sw1.getState() ? "true": "false", sw1.getLastState() ? "true": "false", sw1.getCount());
   Serial.printf(" -- GPIO %d state: %s lastState: %s count: %d\n", sw2.getPin(), sw2.getState() ? "true": "false", sw2.getLastState() ? "true": "false", sw2.getCount());
-  Serial.printf(" -- vBus %1.3fmV vBat: %1.3fmV\n", vBus, vBat);
+  Serial.printf(" -- vBus %1.3fmV vBat: %1.3fmV\n", vBusSense.mV, vBatSense.mV);
 
 }
 
 
 void PostBox::loop(void) {
 
+  vBusSense.updatedADC();
+  vBatSense.updatedADC();
   updatePowerStatus();
   
   // Check if there was an interrupt casued by one PostBoxSwitch
@@ -151,20 +155,10 @@ void PostBox::powerOff(void) {
 }
 
 
-void PostBox::updatedADC(void){
-  vBusSense.updatedADC();
-  vBatSense.updatedADC();
-  vBus = vBusSense.mV;
-  vBat = vBatSense.mV;
-}
-
-
 void PostBox::updatePowerStatus(void){
   //TODO: BATTERY, USB POWER AND CHARGING SENSE
-  updatedADC();
-
   // Charging always happens if vBus > 3,75v for MCP73831/2, 4v for TP4056
-  if (vBus >= 4000){
+  if (vBusSense.mV >= 4000){
     if (vBatStat == LOW) {
       chargingStatus = ChargingStatus::Charging;
       lastChargingStatus = chargingStatus;
@@ -180,12 +174,12 @@ void PostBox::updatePowerStatus(void){
       }
     } else chargingStatus = ChargingStatus::Unknown;
 
-  } else if (vBus <= 3999) {
+  } else if (vBusSense.mV <= 3999) {
     chargingStatus = ChargingStatus::NotCharging;
     lastChargingStatus = chargingStatus;
-    if (vBat >= 2700){
+    if (vBatSense.mV >= 2700){
       powerStatus = PowerStatus::BatteryPowered;
-    } else if (vBat <= 100) powerStatus = PowerStatus::USBPowered;
+    } else if (vBatSense.mV <= 100) powerStatus = PowerStatus::USBPowered;
   }
 
 }
@@ -193,7 +187,7 @@ void PostBox::updatePowerStatus(void){
 
 float PostBox::readVoltage(void) {
 	#ifdef ARDUINO_IOTPOSTBOX_V1
-	  return vBat/1000;
+	  return vBatSense.mV/1000;
 	#else
 	#ifdef USE_TP4056
 		int sensorValue = analogRead(A0);
@@ -304,8 +298,8 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub += String(wakeUpGPIO);
   msg_pub = msg_pub + " ,\"boot_counter\": " + String(bootCount);
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage(), 3);
-  msg_pub = msg_pub + " ,\"vBat\": " + String((float)vBat/1000, 3);
-  msg_pub = msg_pub + " ,\"vBus\": " + String((float)vBus/1000, 3);
+  msg_pub = msg_pub + " ,\"vBat\": " + String((float)vBatSense.mV/1000, 3);
+  msg_pub = msg_pub + " ,\"vBus\": " + String((float)vBusSense.mV/1000, 3);
   msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
 
   // int countSwitches = sizeof switches / sizeof *switches;

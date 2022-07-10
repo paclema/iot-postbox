@@ -119,9 +119,6 @@ public:
 
 	ADCSense vBatSense;
 	ADCSense vBusSense;
-
-	float vBat = 0;		// Values in mV
-	float vBus = 0;		// Values in mV
 	int vBatStat = 0;	// Charging = 0, Not charging = 1
 
 
@@ -134,11 +131,10 @@ public:
 	void loop(void);
 	void powerOff(void);
 
-	void updatedADC(void);
 	void updatePowerStatus(void);
 	float readVoltage(void);
-	float getVBus(void) { return vBus;};
-	float getVBat(void) { return vBat;};
+	float getVBus(void) { return vBusSense.mV;};
+	float getVBat(void) { return vBatSense.mV;};
 	float getVBatNow(void) { return vBatSense.getLastmV(); };
 	float getVBatStat(void) { return vBatStat;};
 

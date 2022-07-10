@@ -41,7 +41,7 @@ public:
 	ADCSense(uint8_t reqpin, adc1_channel_t channel, float coeff, String initName);
 	~ADCSense(void);
 
-	void init(adc_atten_t atten);
+	void setup(adc_atten_t atten);
 	void updatedADC(void);
 
 	uint8_t getPin() { return ADCpin; }
