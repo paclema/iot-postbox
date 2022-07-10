@@ -8,11 +8,10 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 
-#include "driver/adc.h"
-#include "esp_adc_cal.h"
 
 //ADC Channels
 // -----------
+#include "ADCSense.h"
 #define VBUS_ADC_CHANNEL	ADC1_CHANNEL_0
 #define VBAT_ADC_CHANNEL	ADC1_CHANNEL_1
 
@@ -118,14 +117,11 @@ public:
 	ChargingStatus chargingStatus = ChargingStatus::Unknown;
 	ChargingStatus lastChargingStatus = ChargingStatus::Unknown;
 
-	float vBatReadings[ADC_SAMPLES];
-	int vBatReadIndex = 0;
-	int vBatReadTotal = 0;
+	ADCSense vBatSense;
 
 	float vBat = 0;		// Values in mV
 	float vBus = 0;		// Values in mV
 	int vBatStat = 0;	// Charging = 0, Not charging = 1
-	esp_adc_cal_characteristics_t *VBAT_adc_chars = new esp_adc_cal_characteristics_t;
 	esp_adc_cal_characteristics_t *VBUS_adc_chars = new esp_adc_cal_characteristics_t;
 
 
@@ -144,10 +140,7 @@ public:
 	float readVoltage(void);
 	float getVBus(void) { return vBus;};
 	float getVBat(void) { return vBat;};
-	float getVBatNow(void) { 
-		uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBatReadings[vBatReadIndex], VBAT_adc_chars);
-		return vBat_ADCVolts * (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
-		};
+	float getVBatNow(void) { return vBatSense.getLastmV(); };
 	float getVBatStat(void) { return vBatStat;};
 
 

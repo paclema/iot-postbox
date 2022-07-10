@@ -3,7 +3,10 @@
 PostBox::PostBox(void) : 
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
-	sw2(SW2_PIN, "Switch_2") {
+	sw2(SW2_PIN, "Switch_2"),
+  vBatSense(VBAT_SENSE_PIN, VBAT_ADC_CHANNEL, (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT, "VBAT")
+  {
+
 
 }
 
@@ -21,7 +24,6 @@ void PostBox::setup(void) {
 
   // Sense inputs
   pinMode(VBUS_SENSE_PIN, INPUT);
-  pinMode(VBAT_SENSE_PIN, INPUT);
   pinMode(VBAT_STAT_SENSE_PIN, INPUT);
   attachInterrupt(VBAT_STAT_SENSE_PIN, std::bind(&PostBox::isrCharging,this), CHANGE);
 
@@ -176,44 +178,17 @@ void PostBox::initADC(void){
       adc1_config_channel_atten(VBUS_ADC_CHANNEL, VBUS_ADC_ATTEN);
       esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1,VBUS_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBUS_adc_chars);
 
-      adc1_config_channel_atten(VBAT_ADC_CHANNEL, VBAT_ADC_ATTEN);
-      esp_adc_cal_value_t val_type2 = esp_adc_cal_characterize(ADC_UNIT_1,VBAT_ADC_ATTEN, ADC_WIDTH_BIT_13, 0, VBAT_adc_chars);
-      
   }
 
-  for (int i = 0; i < ADC_SAMPLES; i++) vBatReadings[i] = 0;
-  for (int i = 0; i < ADC_SAMPLES; i++) updatedADC();
+  vBatSense.init(VBAT_ADC_ATTEN);
 
 }
 
 
 void PostBox::updatedADC(void){
-  //TODO: BATTERY, USB POWER AND CHARGING SENSE
 
-  int vBat_raw = adc1_get_raw(VBAT_ADC_CHANNEL);
-  // uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBat_raw, VBAT_adc_chars);
-  // vBat = vBat_ADCVolts * VBAT_VOLTAGE_DIVIDER_COEFICIENT;
-  // Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV - vBat_raw: %d\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000, vBat_raw);
-
-  bool printFlag = false;
-
-  vBatReadTotal = vBatReadTotal - vBatReadings[vBatReadIndex];
-  vBatReadings[vBatReadIndex] = vBat_raw;
-  vBatReadTotal = vBatReadTotal + vBatReadings[vBatReadIndex];
-  vBatReadIndex = vBatReadIndex + 1;
-  if (vBatReadIndex >= ADC_SAMPLES) {
-
-    vBatReadIndex = 0;
-    printFlag = true;
-
-  } else printFlag = false;
-
-  // vBat = vBatReadTotal / ADC_SAMPLES;
-  uint32_t vBat_ADCVolts = esp_adc_cal_raw_to_voltage(vBatReadTotal / ADC_SAMPLES, VBAT_adc_chars);
-  vBat = vBat_ADCVolts * (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
-  float t = (float)VBAT_VOLTAGE_DIVIDER_COEFICIENT;
-  // if (printFlag) Serial.printf("VBAT sense reads %dmV --> %1.3fV VoltageDivider: %1.3fV --> %1.2fV- vBat_raw: %d VBAT_VOLTAGE_DIVIDER_COEFICIENT: %1.4f\n", vBat_ADCVolts, (float)vBat_ADCVolts/1000, vBat/1000,vBat/1000, vBat_raw, t);
-
+  vBatSense.updatedADC();
+  vBat = vBatSense.mV;
 
   int vBus_raw = adc1_get_raw(VBUS_ADC_CHANNEL);
   uint32_t vBus_ADCVolts = esp_adc_cal_raw_to_voltage(vBus_raw, VBUS_adc_chars);
