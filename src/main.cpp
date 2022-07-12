@@ -87,9 +87,9 @@ void setup() {
   config.addDashboardObject("heap_free", getHeapFree);
   config.addDashboardObject("loop", getLoopTime);
   config.addDashboardObject("RSSI", getRSSI);
-  config.addDashboardObject("VCC", getVCC);
+  // config.addDashboardObject("VCC", getVCC);
   config.addDashboardObject("VBat", getVBat);
-  config.addDashboardObject("VBatNow", getVBatNow);
+  // config.addDashboardObject("VBatNow", getVBatNow);
   config.addDashboardObject("VBus", getVBus);
   config.addDashboardObject("VBatStat", getVBatStat);
   config.addDashboardObject("ChargingStatus", getChargingStatus);
