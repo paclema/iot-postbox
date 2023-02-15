@@ -29,6 +29,7 @@ PubSubClient * mainClientMqtt;
 #include "PostBox.h"
 PostBox postbox;
 
+#include "loraFunctions.h"
 
 
 void turnESPOff (void){
@@ -76,6 +77,8 @@ void setup() {
   postbox.setup();
   config.begin();
 
+  loraSetup();
+
   config.setPreSleepRoutine(turnESPOff);
   
   
@@ -108,6 +111,8 @@ void loop() {
   config.loop();
 
   postbox.loop();
+
+  loraLoop();
 
 
   // Reconnection loop:
