@@ -72,7 +72,7 @@ RTC_DATA_ATTR static int bootCount = 0;
 // #include "loraFunctions.h
 #include <lmic.h>
 #include <CayenneLPP.h>
-#define CAYENNE_MAX_PAYLOAD_SIZE    24
+#define CAYENNE_MAX_PAYLOAD_SIZE    64
 static uint8_t mydataPostbox[] = "Hello, world from publish2TTN!";
 
 

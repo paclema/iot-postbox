@@ -305,12 +305,37 @@ void PostBox::publish2TTN(void) {
 
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
-        Serial.printf("OP_TXRXPEND, not sending\n");
+        Serial.printf("*** OP_TXRXPEND, not sending\n");
     } else {
         // Prepare upstream data transmission at the next possible time.
 
-        LMIC_setTxData2(1, mydataPostbox, sizeof(mydataPostbox)-1, 0);
-        Serial.printf("*** Packet queued: %s\n", mydataPostbox);
+
+        lpp.reset();
+
+        lpp.addAnalogInput(1, (float)wakeUpGPIO);
+        lpp.addAnalogInput(2, (float)bootCount);
+
+        lpp.addVoltage(1, readVoltage()); //VCC
+        lpp.addVoltage(2, power.vBatSense.mV/1000.F); //vBat
+        lpp.addVoltage(3, power.vBusSense.mV/1000.F); //vBus
+
+        lpp.addAnalogInput(3, (float)sw1.getCount());
+        lpp.addPresence(1, sw1.getState());
+        lpp.addAnalogInput(4, (float)sw2.getCount());
+        lpp.addPresence(2, sw2.getState());
+
+
+        LMIC_setTxData2(1, lpp.getBuffer(), lpp.getSize(), 0);
+
+        Serial.printf("*** Packet queued:\n");
+        DynamicJsonDocument jsonBuffer(1024);
+        JsonObject root = jsonBuffer.to<JsonObject>();
+        lpp.decodeTTN(lpp.getBuffer(), lpp.getSize(), root);
+        serializeJsonPretty(root, Serial);
+        Serial.println();
+
+        // LMIC_setTxData2(1, mydataPostbox, sizeof(mydataPostbox)-1, 0);
+        // Serial.printf("*** Packet queued: %s\n", mydataPostbox);
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }

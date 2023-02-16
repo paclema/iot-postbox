@@ -162,7 +162,7 @@ void onEvent (ev_t ev) {
             
             }
             // Schedule next transmission
-            os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
+            // os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
             break;
         case EV_LOST_TSYNC:
             Serial.println(F("EV_LOST_TSYNC"));
@@ -231,7 +231,7 @@ void loraSetup(){
     LMIC_setDrTxpow(DR_SF7,14);
 
     // Start job (sending automatically starts OTAA too)
-    do_send(&sendjob);
+    // do_send(&sendjob);
 
 	log_e("Setting up lora done");
 
