@@ -3,7 +3,8 @@
 PostBox::PostBox(void) : 
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
-	sw2(SW2_PIN, "Switch_2")
+	sw2(SW2_PIN, "Switch_2"),
+	lpp(CAYENNE_MAX_PAYLOAD_SIZE)
   {
 
 
@@ -90,7 +91,10 @@ void PostBox::loop(void) {
   updatePowerStatus();
   
   // Check if there was an interrupt casued by one PostBoxSwitch
-  if ( sw1.checkChange() || sw2.checkChange() ) publishWakeUp("wakeup");
+  if ( sw1.checkChange() || sw2.checkChange() ) {
+    publishWakeUp("wakeup");
+    // publish2TTN();
+  }
 
   // Check the PostBoxSwitch sw2 to tur on/off the LED strip
   if (sw2.getState() != sw2.getLastState()){
@@ -257,6 +261,10 @@ void PostBox::turnOffDevice(void) {
 
 void PostBox::publishWakeUp(String topic_end) {
   String topic = MQTTBaseTopic + topic_end;
+
+  if (topic_end == "wakeup"){
+    publish2TTN();
+  }
   
   String msg_pub ="{\"wake_up_pin\": ";
   msg_pub += String(wakeUpGPIO);
@@ -291,4 +299,18 @@ void PostBox::publishWakeUp(String topic_end) {
 
   mqtt->setBufferSize((uint16_t)(msg_pub.length() + 100));
   wakeUpPublished = mqtt->publish(topic.c_str(), msg_pub.c_str());
+}
+
+void PostBox::publish2TTN(void) {
+
+    // Check if there is not a current TX/RX job running
+    if (LMIC.opmode & OP_TXRXPEND) {
+        Serial.printf("OP_TXRXPEND, not sending\n");
+    } else {
+        // Prepare upstream data transmission at the next possible time.
+
+        LMIC_setTxData2(1, mydataPostbox, sizeof(mydataPostbox)-1, 0);
+        Serial.printf("*** Packet queued: %s\n", mydataPostbox);
+    }
+    // Next TX is scheduled after TX_COMPLETE event.
 }

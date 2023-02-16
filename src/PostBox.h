@@ -67,6 +67,15 @@ RTC_DATA_ATTR static int bootCount = 0;
 #endif
 
 
+//Lora and TTN
+//------------
+// #include "loraFunctions.h
+#include <lmic.h>
+#include <CayenneLPP.h>
+#define CAYENNE_MAX_PAYLOAD_SIZE    24
+static uint8_t mydataPostbox[] = "Hello, world from publish2TTN!";
+
+
 class PostBox {
 public:
 	CRGB leds[NUM_LEDS];
@@ -111,6 +120,7 @@ public:
 	void turnOffDevice(void);
 
 	void publishWakeUp(String topic_end);
+	void publish2TTN(void);
 
 	void setMQTTBaseTopic(String topic) { MQTTBaseTopic = topic; }
 	void setMQTTClient(PubSubClient * client) { mqtt = client; }
@@ -122,6 +132,7 @@ private:
 	bool wakeUpPublished = false;
 	int wakeUpGPIO = -1;              // Variable to store the GPIO which triggered the wake from Deep Sleep
 
+	CayenneLPP lpp;
 
 };
 
