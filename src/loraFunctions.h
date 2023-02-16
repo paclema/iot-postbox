@@ -32,12 +32,7 @@ static osjob_t sendjob;
 // cycle limitations).
 const unsigned TX_INTERVAL = 60;
 
-// const lmic_pinmap lmic_pins = {
-//   .nss = 10, 
-//   .rxtx = LMIC_UNUSED_PIN,
-//   .rst = 14,
-//   .dio = {/*dio0*/ 6, /*dio1*/ 7, /*dio2*/ 8}
-// };
+char TTN_response[30];
 
 class MyHalConfig_t : public Arduino_LMIC::HalConfiguration_t {
 
@@ -46,31 +41,22 @@ public:
 
   // set SPI pins to board configuration, pins may come from pins_arduino.h
   virtual void begin(void) override {
-    // SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
-    SPI.begin(12, 13, 11, 10);
+    SPI.begin(RFM95W_SCK_PIN, RFM95W_MISO_PIN, RFM95W_MOSI_PIN, RFM95W_NSS_PIN);
   }
 };
 
 static MyHalConfig_t myHalConfig{};
-
-// LMIC pin mapping for Hope RFM95 / HPDtek HPD13A transceivers
 static const lmic_pinmap myPinmap = {
-    // .nss = LORA_CS,
-    .nss = 10,
+    .nss = RFM95W_NSS_PIN,
     .rxtx = LMIC_UNUSED_PIN,
-    // .rst = LORA_RST == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_RST,
-  	.rst = 14,
-    // .dio = {LORA_IRQ, LORA_IO1,
-    //         LORA_IO2 == NOT_A_PIN ? LMIC_UNUSED_PIN : LORA_IO2},
-	.dio = {/*dio0*/ 6, /*dio1*/ 7, /*dio2*/ 8},
-
+  	.rst = RFM95W_RESET_PIN,
+	.dio = {/*dio0*/ RFM95W_DIO0_PIN, /*dio1*/ RFM95W_DIO1_PIN, /*dio2*/ RFM95W_DIO2_PIN},
     // .rxtx_rx_active = LMIC_UNUSED_PIN,
     // .rssi_cal = 10,
     // .spi_freq = 8000000, // 8MHz
     .pConfig = &myHalConfig
 };
 
-char TTN_response[30];
 
 
 void printHex2(unsigned v) {
@@ -227,9 +213,7 @@ void loraSetup(){
 
 	log_e("Setting up lora...");
 	// LMIC init
-    // os_init();
-	// setup LMIC stack WITH CUSTOM SPI
-  	os_init_ex(&myPinmap); // initialize lmic run-time environment
+  	os_init_ex(&myPinmap);
 
 	// Reset the MAC state. Session and pending data transfers will be discarded.
     LMIC_reset();
