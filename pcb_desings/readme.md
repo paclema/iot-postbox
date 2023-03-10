@@ -24,6 +24,8 @@ This design is based in an ESP32-S2 MCU. It also provides Lora support with an R
 | ![Alt text](iot-postbox_v1/docs/iot-postbox_v1.0_top.png?raw=true "v1.0")   |
 | ![Alt text](iot-postbox_v1/docs/iot-postbox_v1.0_bot.png?raw=true "v1.0")   |
 
+#### IoT-postbox v1 Windows 11 drivers:
+Latest tested working drivers are [CP210x Universal Windows Driver v11.2.0 (10/21/2022)](https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip) that can be found [here](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads).
 ### Submodules installation for KiCad:
 Under the folder /libs you can find several symbols and footprints from other repositories.
 To pull KiCad lib submodules run: `git submodule update --init --recursive`
