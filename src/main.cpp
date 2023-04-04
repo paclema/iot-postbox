@@ -68,7 +68,7 @@ String getConfiguredSleep(){ return String(configuredSleep ? "true" : "false");}
 
 void setup() {
   Serial.begin(115200);
-  // while (!Serial);  // Wait until the Serial is available
+  while (!Serial);  // Wait until the Serial is available
   #ifdef ENABLE_SERIAL_DEBUG
     Serial.setDebugOutput(true);
   #endif
@@ -100,7 +100,8 @@ void setup() {
   config.addDashboardObject("configuredSleep", getConfiguredSleep);
 
 
-  Serial.println("###  Looping time\n");
+  Serial.printf("MQTT Device Topic: %s\n", config.getDeviceTopic().c_str());
+  Serial.println("###  Looping time\n");  
 
 }
 

@@ -3,8 +3,7 @@
 PostBox::PostBox(void) : 
 	// sw1(0, "Switch_1"),
 	sw1(SW1_PIN, "Switch_1"),
-	sw2(SW2_PIN, "Switch_2"),
-	lpp(CAYENNE_MAX_PAYLOAD_SIZE)
+	sw2(SW2_PIN, "Switch_2")
   {
 
 
@@ -303,39 +302,59 @@ void PostBox::publishWakeUp(String topic_end) {
 
 void PostBox::publish2TTN(void) {
 
-    // Check if there is not a current TX/RX job running
-    if (LMIC.opmode & OP_TXRXPEND) {
-        Serial.printf("*** OP_TXRXPEND, not sending\n");
-    } else {
-        // Prepare upstream data transmission at the next possible time.
+  // Check if there is not a current TX/RX job running
+  if (LMIC.opmode & OP_TXRXPEND) {
+      Serial.printf("*** OP_TXRXPEND, not sending\n");
+  } else {
+    // Prepare upstream data transmission at the next possible time.
+
+    int index = 0;
+
+    // wakeUpGPIO starts with -1 by default. If it is not changed, it means that the device was not woken up by a GPIO
+    // it needs to be incremented by 1 to convert it to uint8_t
+    payload[index++] = wakeUpGPIO + 1;
+
+    uint16_t bootCount_uint16_t = bootCount;
+    payload[index++] = (bootCount_uint16_t >> 8) & 0xFF;
+    payload[index++] = bootCount_uint16_t & 0xFF;
+
+    uint16_t vBat = power.vBatSense.mV;
+    payload[index++] = (vBat >> 8) & 0xFF;
+    payload[index++] = vBat & 0xFF;
+
+    uint16_t vBus = power.vBusSense.mV;
+    payload[index++] = (vBus >> 8) & 0xFF;
+    payload[index++] = vBus & 0xFF;
+
+    uint32_t sw1_uint16_t = sw1.getCount();
+    payload[index++] = (sw1_uint16_t >> 24) & 0xFF;
+    payload[index++] = (sw1_uint16_t >> 16) & 0xFF;
+    payload[index++] = (sw1_uint16_t >> 8) & 0xFF;
+    payload[index++] = sw1_uint16_t & 0xFF;
+
+    payload[index++] = sw1.getState();
+
+    uint32_t sw2_uint16_t = sw2.getCount();
+    payload[index++] = (sw2_uint16_t >> 24) & 0xFF;
+    payload[index++] = (sw2_uint16_t >> 16) & 0xFF;
+    payload[index++] = (sw2_uint16_t >> 8) & 0xFF;
+    payload[index++] = sw2_uint16_t & 0xFF;
+
+    payload[index++] = sw2.getState();
+
+    payload[index++] = (uint8_t)powerStatus;
+    payload[index++] = (uint8_t)chargingStatus;
 
 
-        lpp.reset();
 
-        lpp.addAnalogInput(1, (float)wakeUpGPIO);
-        lpp.addAnalogInput(2, (float)bootCount);
-
-        lpp.addVoltage(1, readVoltage()); //VCC
-        lpp.addVoltage(2, power.vBatSense.mV/1000.F); //vBat
-        lpp.addVoltage(3, power.vBusSense.mV/1000.F); //vBus
-
-        lpp.addAnalogInput(3, (float)sw1.getCount());
-        lpp.addPresence(1, sw1.getState());
-        lpp.addAnalogInput(4, (float)sw2.getCount());
-        lpp.addPresence(2, sw2.getState());
-
-
-        LMIC_setTxData2(1, lpp.getBuffer(), lpp.getSize(), 0);
-
-        Serial.printf("*** Packet queued:\n");
-        DynamicJsonDocument jsonBuffer(1024);
-        JsonObject root = jsonBuffer.to<JsonObject>();
-        lpp.decodeTTN(lpp.getBuffer(), lpp.getSize(), root);
-        serializeJsonPretty(root, Serial);
-        Serial.println();
-
-        // LMIC_setTxData2(1, mydataPostbox, sizeof(mydataPostbox)-1, 0);
-        // Serial.printf("*** Packet queued: %s\n", mydataPostbox);
+    // Print the payload and its size to the serial port
+    Serial.printf("Payload[%d]: ",index);
+    for (int i = 0; i < sizeof(payload); i++) {
+        Serial.print(payload[i], HEX);
+        Serial.print(" ");
     }
-    // Next TX is scheduled after TX_COMPLETE event.
+    Serial.println();
+    LMIC_setTxData2(1, payload, index, 0);
+  }
+  // Next TX is scheduled after TX_COMPLETE event.
 }

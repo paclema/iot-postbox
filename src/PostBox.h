@@ -71,8 +71,6 @@ RTC_DATA_ATTR static int bootCount = 0;
 //------------
 // #include "loraFunctions.h
 #include <lmic.h>
-#include <CayenneLPP.h>
-#define CAYENNE_MAX_PAYLOAD_SIZE    64
 static uint8_t mydataPostbox[] = "Hello, world from publish2TTN!";
 
 
@@ -132,7 +130,7 @@ private:
 	bool wakeUpPublished = false;
 	int wakeUpGPIO = -1;              // Variable to store the GPIO which triggered the wake from Deep Sleep
 
-	CayenneLPP lpp;
+	uint8_t payload[19];
 
 };
 
