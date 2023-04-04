@@ -1,0 +1,42 @@
+function decodeUplink(input) {
+  var index = 0;
+  var bytes = input.bytes;
+  var data = {};
+
+  // Decode wakeUpGPIO
+  data.wakeUpGPIO = bytes[index++] - 1;
+
+  // Decode bootCount
+  data.bootCount = (bytes[index++] << 8) | bytes[index++];
+
+  // Decode vBat and get units in Volts
+  data.vBus = ((bytes[index++] << 8) | bytes[index++]) / 1000.0;
+
+  // Decode vBus and get units in Volts
+  data.vBus = ((bytes[index++] << 8) | bytes[index++]) / 1000.0;
+
+  // Decode sw1 counter
+  data.sw1_count = (bytes[index++] << 24) | (bytes[index++] << 16) | (bytes[index++] << 8) | bytes[index++];
+
+  // Decode sw1 state
+  data.sw1_state = bytes[index++];
+
+  // Decode sw2 counter
+  data.sw2_count = (bytes[index++] << 24) | (bytes[index++] << 16) | (bytes[index++] << 8) | bytes[index++];
+
+  // Decode sw2 state
+  data.sw2_state = bytes[index++];
+
+  // Decode powerStatus
+  data.powerStatus = bytes[index++];
+
+  // Decode chargingStatus
+  data.chargingStatus = bytes[index++];
+
+
+  return {
+    data: data,
+    warnings: [],
+    errors: []
+  };
+}
