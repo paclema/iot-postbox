@@ -271,7 +271,7 @@ void PostBox::publishWakeUp(String topic_end) {
   msg_pub = msg_pub + " ,\"vcc\": " + String(readVoltage(), 3);
   msg_pub = msg_pub + " ,\"vBat\": " + String((float)power.vBatSense.mV/1000, 3);
   msg_pub = msg_pub + " ,\"vBus\": " + String((float)power.vBusSense.mV/1000, 3);
-  msg_pub = msg_pub + " ,\"rssi\": " + String(WiFi.RSSI());
+  msg_pub = msg_pub + " ,\"rssi_STA\": " + String(WiFi.RSSI());
 
   // int countSwitches = sizeof switches / sizeof *switches;
   // for(int i=0; i< countSwitches; i++) {
@@ -279,10 +279,10 @@ void PostBox::publishWakeUp(String topic_end) {
   //   msg_pub = msg_pub + " ,\"GPIO_" + switches[i].pin + "_state\": " + (switches[i].state ? "true" : "false");
   // }
 
-  msg_pub = msg_pub + " ,\"GPIO_" + sw1.getPin() + "_counter\": " + String(sw1.getCount());
-  msg_pub = msg_pub + " ,\"GPIO_" + sw1.getPin() + "_state\": " + (sw1.getState() ? "true" : "false");
-  msg_pub = msg_pub + " ,\"GPIO_" + sw2.getPin() + "_counter\": " + String(sw2.getCount());
-  msg_pub = msg_pub + " ,\"GPIO_" + sw2.getPin() + "_state\": " + (sw2.getState() ? "true" : "false");
+  msg_pub = msg_pub + " ,\"sw1_counter\": " + String(sw1.getCount());
+  msg_pub = msg_pub + " ,\"sw1_state\": " + sw1.getState();
+  msg_pub = msg_pub + " ,\"sw2_counter\": " + String(sw2.getCount());
+  msg_pub = msg_pub + " ,\"sw2_state\": " + sw2.getState();
 
   msg_pub = msg_pub + " ,\"PowerStatus\": " + String((int)powerStatus);
   msg_pub = msg_pub + " ,\"ChargingStatus\": " + String((int)chargingStatus);
