@@ -19,10 +19,11 @@ This design is based in an ESP8266 MCU. Within the folder you can find 2 version
 In this version, the CH_PU pin of the MCU is not triggered but ESP32S2 sleep functions using digital triggers are used.
 This design is based in an ESP32-S2 MCU. It also provides Lora support with an RFM95W module. It can be added a 16MB flash and 8MB PSRAM.
 
-| v1.0                                                            |
+| v1.2                                                            |
 |:---------------------------------------------------------------:|
-| ![Alt text](iot-postbox_v1/docs/iot-postbox_v1.0_top.png?raw=true "v1.0")   |
-| ![Alt text](iot-postbox_v1/docs/iot-postbox_v1.0_bot.png?raw=true "v1.0")   |
+| ![Alt text](iot-postbox_v1/docs/v1.2/iot-postbox_top_xray.png "v1.2")   |
+| ![Alt text](iot-postbox_v1/docs/v1.2/iot-postbox_bottom_xray.png "v1.2")   |
+
 
 ### Submodules installation for KiCad:
 Under the folder /libs you can find several symbols and footprints from other repositories.
