@@ -3,7 +3,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://www.paypal.com/donate/?business=8PXZ598XDGAS2&no_recurring=0&currency_code=EUR&source=url "Click here to donate with PayPal")
 
 
-IoT-PostBox is a complete smart mailbox sensor solution that monitors mailbox activity and sends wireless notifications when events occur. The project consists of custom hardware designs with integrated battery management and charging system, and firmware that monitors switch sensors to detect mailbox events. Initially developed with ESP8266 (v0.x hardware), the project has evolved to ESP32-S2 (v1.x hardware) with added LoRaWAN capabilities for extended range communication beyond WiFi and a optimized power management system. The device is designed for battery-powered operation with onboard charging circuitry. When an event is detected, the device wakes from deep sleep, connects wirelessly (WiFi or LoRa), publishes the event via MQTT or LoRaWAN, and returns to sleep to maximize battery life. The system includes device configuration and management through the WebConfigServer library, which provides a web-based dashboard to visualize data and handle device configurations easily using a config.json file.
+IoT-PostBox is a complete smart mailbox sensor solution that monitors mailbox activity and sends wireless notifications when events occur. The project consists of custom hardware designs with integrated battery management and charging system, and firmware that monitors switch sensors to detect mailbox events. The hardware has evolved from initial ESP8266-based designs (IoT-PostBox v0.x) to current ESP32S2-based designs (IoT-PostBox v1.x) with added LoRaWAN capabilities for extended range communication beyond WiFi and a optimized power management system. The device is designed for battery-powered operation with onboard charging circuitry. When an event is detected, the device wakes from deep sleep, connects wirelessly (WiFi or LoRa), publishes the event via MQTT or LoRaWAN, and returns to sleep to maximize battery life. The system includes device configuration and management through the WebConfigServer library, which provides a web-based dashboard to visualize data and handle device configurations easily using a config.json file.
 
 **Installation and use:** The device is installed inside the mailbox with switches positioned to detect when the mail slot or door is opened. One switch can detect mail insertion (when the slot is opened to insert mail), while another can detect mail collection (when the mailbox door is opened to retrieve mail). This allows monitoring both mail delivery and pickup events.
 
@@ -12,7 +12,7 @@ IoT-PostBox is a complete smart mailbox sensor solution that monitors mailbox ac
 - **v1.x (ESP32-S2):** Enhanced with LoRaWAN capability, improved power management with deep sleep modes managed by interrupts (allowing identification of wake-up source via WAKE_UP_BITMASK), advanced battery management, native USB programming, and expanded I/O options.
 
 > [!NOTE]  
-> For detailed hardware specifications, BOMs, and pinouts, see [`pcb_desings/readme.md`](pcb_desings/readme.md).**
+> For detailed hardware specifications, BOMs, and pinouts, see [`pcb_desings/readme.md`](pcb_desings/).
 
 ---
 
