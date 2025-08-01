@@ -35,35 +35,19 @@ Firmware:
 2. Add the struct object in the configuration class _/lib/WebConfigServer/WebConfigServer.h_
 3. Update the parse function to link the json object with the class struct in the configuration class _/lib/WebConfigServer/WebConfigServer.cpp_
 
+### Web Dashboard
+
+The static web dashboard served by the device is provided by the [WebConfigServer](https://github.com/paclema/WebConfigServer) library.
+For this project, the default dashboard is sufficient and no local `/webserver` folder is included.
+
+If you need to update or customize the dashboard:
+- Go to the WebConfigServer repository and follow the instructions to build the Angular webserver.
+- Copy the generated static files to the `/data/` folder in this project.
+- Upload `/data/` to the device SPIFFS as described below.
+
 ### Upload _/data_ folder to ESP SPIFFS File System:
 
-Using platformio run the next command: `pio run -t uploadfs`
-
-
-### Build webserver to _/data_ fodler:
-If you can not run angular-cli from platformio PowerShell using windows, activate it with:
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-Under _webserver/_ folder:
-```console
-ng build --prod --optimization=true --outputHashing=none; npm run postbuild
-```
-
-To build and upload SPIFFS
-```console
-cd ./webserver; ng build --prod --optimization=true --outputHashing=none; npm run postbuild;cd ..; pio run --target uploadfs --environment d1_mini
-```
-
-To build for xammp:
-```console
-ng build --prod --optimization=true --outputHashing=none --outputPath=C:/xampp/htdocs --deleteOutputPath=false
-```
-
-These build options can be added in angular.json in the future.
-
-### Compress _/data_ fodler with gzip:
-Under webserver folder:
-
-```console
-npm run postbuild
+Using PlatformIO, run:
+```sh
+pio run -t uploadfs
 ```
