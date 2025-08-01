@@ -1,4 +1,7 @@
 # IoT-PostBox
+[![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg?&logo=creative-commons)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://www.paypal.com/donate/?business=8PXZ598XDGAS2&no_recurring=0&currency_code=EUR&source=url "Click here to donate with PayPal")
+
 
 IoT-PostBox is a complete smart mailbox sensor solution that monitors mailbox activity and sends wireless notifications when events occur. The project consists of custom hardware designs with integrated battery management and charging system, and firmware that monitors switch sensors to detect mailbox events. Initially developed with ESP8266 (v0.x hardware), the project has evolved to ESP32-S2 (v1.x hardware) with added LoRaWAN capabilities for extended range communication beyond WiFi and a optimized power management system. The device is designed for battery-powered operation with onboard charging circuitry. When an event is detected, the device wakes from deep sleep, connects wirelessly (WiFi or LoRa), publishes the event via MQTT or LoRaWAN, and returns to sleep to maximize battery life. The system includes device configuration and management through the WebConfigServer library, which provides a web-based dashboard to visualize data and handle device configurations easily using a config.json file.
 
@@ -57,5 +60,16 @@ If you need to customize the dashboard:
 This project uses the following main libraries:
 - [WebConfigServer](https://github.com/paclema/WebConfigServer) - Web dashboard and device configuration management
 - [PowerManagement](https://github.com/paclema/PowerManagement) - Battery monitoring and power management
+
+---
+
+## 📄 License
+
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]&nbsp;&nbsp;&nbsp;<a property="dct:title" rel="cc:attributionURL" href="https://github.com/paclema/iot-postbox"> IoT-PostBox</a> © 2019-2025 by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="http://www.paclema.com/">paclema</a> is licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0</a>
+
+**Hardware and firmware designs** are provided for educational and non-commercial use. For commercial use, please contact the author for permission.
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
 
 ---
