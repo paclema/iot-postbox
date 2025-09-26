@@ -20,8 +20,8 @@ unsigned long previousMainLoopMillis = 0;
 WebConfigServer config;   // <- global configuration object
 
 
-#include <PubSubClient.h>
-PubSubClient * mainClientMqtt;
+#include <MQTTClient.h>
+MQTTClient * mainClientMqtt;
 
 
 // PostBox object

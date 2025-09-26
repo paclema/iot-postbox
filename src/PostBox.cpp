@@ -289,6 +289,6 @@ void PostBox::publishWakeUp(String topic_end) {
 
   Serial.println(msg_pub);
 
-  mqtt->setBufferSize((uint16_t)(msg_pub.length() + 100));
+  // mqtt->setBufferSize((uint16_t)(msg_pub.length() + 100));
   wakeUpPublished = mqtt->publish(topic.c_str(), msg_pub.c_str());
 }

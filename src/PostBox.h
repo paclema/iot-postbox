@@ -15,7 +15,7 @@
 #endif
 
 
-#include <PubSubClient.h>
+#include <MQTTClient.h>
 
 
 // WS2812B LED strip
@@ -76,7 +76,7 @@ public:
 
 
 	String MQTTBaseTopic;
-	PubSubClient *mqtt;
+	MQTTClient *mqtt;
 
 	PowerManagement power;
 	PowerStatus powerStatus = PowerStatus::Unknown;
@@ -113,7 +113,7 @@ public:
 	void publishWakeUp(String topic_end);
 
 	void setMQTTBaseTopic(String topic) { MQTTBaseTopic = topic; }
-	void setMQTTClient(PubSubClient * client) { mqtt = client; }
+	void setMQTTClient(MQTTClient * client) { mqtt = client; }
 
 
 
