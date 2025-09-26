@@ -44,7 +44,7 @@
 
 // PostBox sleep configs
 // ---------------------
-#define WAKE_UP_BITMASK ( GPIO_SEL_4 | GPIO_SEL_5 )
+#define WAKE_UP_BITMASK ( GPIO_NUM_4 | GPIO_NUM_5 )
 RTC_DATA_ATTR static int bootCount = 0;
 
 
